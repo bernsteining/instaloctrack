@@ -17,7 +17,6 @@ number_publications = browser.find_element_by_xpath("/html/body").text.strip().s
 
 def scrolls(publications): # scrolls required to snag all the data accordingly to the number of posts
     return (int(publications))//11
-    #return 1
 
 def fetch_urls(number_publications):
   links = []
@@ -84,9 +83,6 @@ def export_data(locations_and_timestamps, gps_coordinates):
     json.dump(json_dump, filehandle)
   print("Location names, timestamps, and GPS Coordinates were writtent to :" + username + '_instaloctrack_data.json')
   
-
-# gerer le cas d'erreur "Error dans les GPS pour eviter l'overflow de list, et gerer le print "
-
 def draw_map(gps_coordinates):
 
   map = """
