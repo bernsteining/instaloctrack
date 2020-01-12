@@ -43,7 +43,7 @@ The map:
 ![Map of @fhollande's locations on Instagram](https://imgur.com/FRaa2zO.png
 )
 
-The JSON data dump (just a part of it to show the format for a giver location):
+The JSON data dump (just a part of it to show the format for a given location):
 
      {
     "place": "la courneuve france",
