@@ -81,7 +81,7 @@ def export_data(locations_and_timestamps, gps_coordinates):
     
   with open(username + '_instaloctrack_data.json', 'w') as filehandle:
     json.dump(json_dump, filehandle)
-  print("Location names, timestamps, and GPS Coordinates were writtent to :" + username + '_instaloctrack_data.json')
+  print("Location names, timestamps, and GPS Coordinates were written to :" + username + '_instaloctrack_data.json')
   
 def draw_map(gps_coordinates):
 
