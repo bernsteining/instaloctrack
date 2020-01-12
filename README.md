@@ -11,7 +11,7 @@ I doesn't use Instagram's API since Instagram deprecated its location functional
 
 ## requirements
 
-sudo apt install chromium-chromedriver
+sudo apt install chromium-chromedriver &&
 pip install selenium requests
 
 ## How it works
@@ -24,7 +24,7 @@ Then, for each picture link, we check if it contains a location in the picture d
 
 Because Instagram doesn't provide GPS coordinates, and we're only given names of places, we have to geocode these (.ie. get the GPS coords from the name's place).
 
-For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usage, no API key is required, and we respect [Normatim's usage Policy](https://operations.osmfoundation.org/policies/nominatim/) by requesting GPS coordinatess once every second.
+For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usage, no API key is required, and we respect [Nominatim's usage Policy](https://operations.osmfoundation.org/policies/nominatim/) by requesting GPS coordinatess once every second.
 
 Eventually, once we have all the GPS coordinatess, we generate a HTML page with Javascript embedded that plots a Google Map with all our locations pinned. Once again, no API key is required for this step.
 For this final step, I have to thank [Tania Rascia's project](https://www.taniarascia.com/google-maps-apis-for-multiple-locations/) which provides such a feature.
