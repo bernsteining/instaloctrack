@@ -2,7 +2,7 @@
 
 A SOCMINT project I made in this week for an OSINT course I had.
 
-TL;DR : Here's a video of the script being launched : [https://www.youtube.com/watch?v=BKlTnBWupr0](https://www.youtube.com/watch?v=BKlTnBWupr0)
+TL;DR : Here's a video of the script being launched : [https://www.youtube.com/watch?v=BKlTnBWupr0](https://www.youtube.com/watch?v=BKlTnBWupr0) (previous version tho !)
 
 ## Goal of the project
 The goal of this project is to collect all the locations linked to the photos of an Instagram profile in order to place them on a map.
@@ -67,8 +67,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Time information about the duration of the script
 * Templating using web2py, django or jinja2 to generate the web map instead of hardcoding the HTML in the script. Might be an overkill tho
-* Use requests instead of chromedriver to fetch the locations and parallelize this part
 *  On Instagram's mobile App, it's possible to get the exact coordinates within a few clicks on the location's information ... maybe we could use this technique while scraping to get the exact GPS coords? 
 * Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
-* Find the best way to geocode : Since the location is the user/community manager input, it can have mistakes / be very inaccurate... Maybe we could try to check if a country name is in the location name in order to minimize mistakes, and then use Normatim's specific field!
+* Find the best way to geocode : Since the location is the user/community manager input, it can have mistakes / be very inaccurate... Maybe we could try to check if a country name is in the location name in order to minimize mistakes, and then use Normatim's specific field! ... Just found out that the page source has more data than I thought about the location ... Gotta parse this!
