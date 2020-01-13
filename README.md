@@ -43,6 +43,10 @@ The map:
 ![Map of @fhollande's locations on Instagram](https://imgur.com/FRaa2zO.png
 )
 
+Information available when clicking on a marker:
+
+![JSON data on map marker](https://imgur.com/a/dJfrq0O.png)
+
 The JSON data dump (just a part of it to show the format for a given location):
 
      {
