@@ -45,7 +45,7 @@ The map:
 
 Information available when clicking on a marker:
 
-![JSON data on map marker](https://imgur.com/dJfrq0O.png)
+![JSON data on map marker](https://i.imgur.com/Wa3FRq2.png)
 
 The JSON data dump (just a part of it to show the format for a given location):
 
