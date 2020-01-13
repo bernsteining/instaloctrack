@@ -46,11 +46,12 @@ The map:
 The JSON data dump (just a part of it to show the format for a given location):
 
      {
-    "place": "la courneuve france",
-    "timestamp": "2015-10-20",
+    "link": "https://www.instagram.com/p/9L4rP-x9aO",
+    "place": "athens greece",
+    "timestamp": "2015-10-23",
     "gps": {
-      "lat": "48.9267236",
-      "lon": "2.3896123"
+      "lat": "37.9841493",
+      "lon": "23.7279843"
     }
 
 
@@ -59,11 +60,10 @@ The JSON data dump (just a part of it to show the format for a given location):
 ## Possible Improvements
 
 * Cleaner code :D
-* Effectively add timestamps to markers on the map (they don't appear for some reason) and add GPS & photo 
 * Time information about the duration of the script
 * Templating using web2py, django or jinja2 to generate the web map instead of hardcoding the HTML in the script. Might be an overkill tho
 * Use requests instead of chromedriver to fetch the locations and parallelize this part
 *  On Instagram's mobile App, it's possible to get the exact coordinates within a few clicks on the location's information ... maybe we could use this technique while scraping to get the exact GPS coords? 
 * Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
-* Find the best way to geocode : Since the location is the user/community manager input, it can have mistakes / be very inaccurate... Maybe we could try to check if a country name is in the location name in order to minimize mistakes. On top of that, Nominatim is as accurate as I would expect, as an example, it geocodes "New Delhi India" in Italy (Roma) because there's a restaurant called like this ... Disappointing :(
+* Find the best way to geocode : Since the location is the user/community manager input, it can have mistakes / be very inaccurate... Maybe we could try to check if a country name is in the location name in order to minimize mistakes. On top of that, Nominatim isn't as accurate as I would expect, as an example, it geocodes "New Delhi India" in Italy (Roma) because there's a restaurant called like this ... Disappointing :(
