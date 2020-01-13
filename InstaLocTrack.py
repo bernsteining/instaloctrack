@@ -4,6 +4,8 @@ import re
 import json
 import requests
 import sys
+import asyncio 
+from concurrent.futures import ThreadPoolExecutor
 
 if len(sys.argv) < 2:
   print("Usage: python3 instaloctrack.py <username>")
@@ -17,7 +19,7 @@ number_publications = browser.find_element_by_xpath("/html/body").text.strip().s
 
 def scrolls(publications): # scrolls required to snag all the data accordingly to the number of posts
     return (int(publications))//11
-    #return 1 for testing purpose
+    #return 1 #for testing purpose
 
 def fetch_urls(number_publications):
   links = []
@@ -32,20 +34,31 @@ def fetch_urls(number_publications):
 
   return list(dict.fromkeys(links)) # remove duplicates
 
+def parse_location(content):
+    location = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', content)
+    if location != None:
+        return location.group(1).replace("-", " ")
+
 def fetch_locations_and_timestamps(links):
   sys.stdout.write("\033[K")
-  links_locations_and_timestamps = []
-  counter = 1
-  for link in links: # iterate over the links, collect location and timestamps if a location is available on the Instagram post
-      print("Checking Locations on each picture : Picture " + str(counter) + " out of " + str(len(links)) + " - " + str(len(links_locations_and_timestamps)) + " Locations collected", end="\r")
-      browser.get('https://www.instagram.com/p/'+link)
-      tmp_loc = re.search('/explore/locations/[0-9]+/([^/]+)/', browser.page_source)
-      if tmp_loc != None:
-        tmp_link = 'https://www.instagram.com/p/'+link
-        tmp_timestamp = re.search('datetime="([^"]+)"', browser.page_source)[0].split('T')[0]
-        links_locations_and_timestamps.append([tmp_link, tmp_loc.group(1).replace('-', ' '), re.sub('[^0-9\-]', '', tmp_timestamp)])
-      counter+=1
-  return links_locations_and_timestamps
+  print("Fetching Locations and Timestamps on each picture ...", end="\r")
+  executor = ThreadPoolExecutor(max_workers=50) # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
+  loop = asyncio.get_event_loop()
+
+  async def make_requests():
+    futures = [loop.run_in_executor(executor, requests.get, 'https://www.instagram.com/p/' + url) for url in links]
+    await asyncio.wait(futures)
+    return futures
+
+  links_locations_timestamps = []
+  futures = loop.run_until_complete(make_requests())
+  for i in range(0, len(futures)):
+    page_content = futures[i].result().text
+    tmp_loc = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', page_content)
+    if tmp_loc  != None:
+      tmp_timestamp = re.search('"uploadDate":"([^"]+)"', page_content)[0].split('T')[0]
+      links_locations_timestamps.append(['https://www.instagram.com/p/'+links[i], tmp_loc.group(1).replace('-', ' '), re.sub('[^0-9\-]', '', tmp_timestamp)])
+  return links_locations_timestamps
 
 def geocode(location):
     return requests.get("https://nominatim.openstreetmap.org/search?q=" + location[1] + "&format=json&limit=1").json()[0]
@@ -79,7 +92,7 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
   for i in range(0, len(links_locations_and_timestamps)):
     links_locations_and_timestamps[i].append(gps_coordinates[i])
     if gps_coordinates[i] != "Error":
-      json_dump.append({"link" : links_locations_and_timestamps[0],"place" : links_locations_and_timestamps[i][1], "timestamp" : links_locations_and_timestamps[i][2], "gps" : {"lat" : links_locations_and_timestamps[i][3][0] ,  "lon" : links_locations_and_timestamps[i][3][1]}})
+      json_dump.append({"link" : links_locations_and_timestamps[i][0],"place" : links_locations_and_timestamps[i][1], "timestamp" : links_locations_and_timestamps[i][2], "gps" : {"lat" : links_locations_and_timestamps[i][3][0] ,  "lon" : links_locations_and_timestamps[i][3][1]}})
     
   with open(username + '_instaloctrack_data.json', 'w') as filehandle:
     json.dump(json_dump, filehandle)
@@ -150,6 +163,7 @@ def draw_map(gps_coordinates):
   print("Map with all the markers was written to:" + username + '_instaloctrack_map.html')
 
 links = fetch_urls(number_publications)
+browser.quit()
 links_locations_and_timestamps = fetch_locations_and_timestamps(links)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 export_data(links_locations_and_timestamps, gps_coordinates)
