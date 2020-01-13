@@ -16,8 +16,8 @@ browser.get('https://www.instagram.com/'+username+'/?hl=fr')
 number_publications = browser.find_element_by_xpath("/html/body").text.strip().split("\n")[3].split(" ")[0] 
 
 def scrolls(publications): # scrolls required to snag all the data accordingly to the number of posts
-    #return (int(publications))//11
-    return 1
+    return (int(publications))//11
+    #return 1 for testing purpose
 
 def fetch_urls(number_publications):
   links = []
