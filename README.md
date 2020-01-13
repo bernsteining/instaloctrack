@@ -49,13 +49,14 @@ Information available when clicking on a marker:
 
 The JSON data dump (just a part of it to show the format for a given location):
 
-     {
+    {
     "link": "https://www.instagram.com/p/9L4rP-x9aO",
     "place": "athens greece",
     "timestamp": "2015-10-23",
     "gps": {
       "lat": "37.9841493",
       "lon": "23.7279843"
+    }
     }
 
 
