@@ -12,13 +12,15 @@ I doesn't use Instagram's API since Instagram deprecated its location functional
 ## requirements
 
 sudo apt install chromium-chromedriver &&
-pip install selenium requests
+pip install -r requirements
+
+
 
 ## How it works
 
 First, we retrieve all the pictures links of the account by scrolling the whole Instagram profile, thanks to selenium's webdriver.
 
-Then, for each picture link, we check if it contains a location in the picture description, and retrieve the location's data if there's one, and the timestamp.
+Then, we retrieve asynchronously (asyncio) each picture link, we check if it contains a location in the picture description, and retrieve the location's data if there's one, and the timestamp.
 
 * **NB:** Since 2018 Instagram deprecated its location API and it's not possible anymore to get the GPS coordinates of a picture, all we can retrieve is the name of the location. (If you can prove me that I'm wrong about this, please tell me!)
 
@@ -50,14 +52,18 @@ Information available when clicking on a marker:
 The JSON data dump (just a part of it to show the format for a given location):
 
     {
-    "link": "https://www.instagram.com/p/9L4rP-x9aO",
-    "place": "athens greece",
-    "timestamp": "2015-10-23",
+    "link": "https://www.instagram.com/p/98Ul-yx9Rc",
+    "place": [
+      "arc de triomphe champs elysees paris",
+      "Paris",
+      "FR"
+    ],
+    "timestamp": "2015-11-11",
     "gps": {
-      "lat": "37.9841493",
-      "lon": "23.7279843"
+      "lat": "48.8566969",
+      "lon": "2.3514616"
     }
-    }
+  }
 
 
 
@@ -70,4 +76,4 @@ The JSON data dump (just a part of it to show the format for a given location):
 *  On Instagram's mobile App, it's possible to get the exact coordinates within a few clicks on the location's information ... maybe we could use this technique while scraping to get the exact GPS coords? 
 * Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
-* Find the best way to geocode : Since the location is the user/community manager input, it can have mistakes / be very inaccurate... Maybe we could try to check if a country name is in the location name in order to minimize mistakes, and then use Normatim's specific field! ... Just found out that the page source has more data than I thought about the location ... Gotta parse this!
+* Correct encoding errors on some locations (ex: Villeneuve-d&#x27;Ascq")
