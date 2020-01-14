@@ -34,15 +34,36 @@ def fetch_urls(number_publications):
 
   return list(dict.fromkeys(links)) # remove duplicates
 
-def parse_location(content):
-    location = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', content)
-    if location != None:
-        return location.group(1).replace("-", " ")
+def parse_location_timestamp(content):
+    location = []
+    try:
+        address = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', content).group(1).replace("-", " ")
+    except:
+        address= "Error"
+    
+    try:
+        city = re.search('"addressLocality":"([^"]+)"', content)[0].split(":")[1].split(",")[0].replace("\"", "")
+    except:
+        city = "Error"
+    
+    try:
+        countrycode = re.search('Country","name":"([^"]+)"', content)[0].split(":")[1].replace("\"", "")
+    except:
+        countrycode = "Error"
+    
+    location.extend([address, city, countrycode])
+
+    if location != ["Error", "Error", "Error"]:
+        tmp_timestamp = re.search('"uploadDate":"([^"]+)"', content)[0].split('T')[0]
+        return [location,re.sub('[^0-9\-]', '', tmp_timestamp)]
+    else:
+        return None
 
 def fetch_locations_and_timestamps(links):
   sys.stdout.write("\033[K")
-  print("Fetching Locations and Timestamps on each picture ...", end="\r")
-  executor = ThreadPoolExecutor(max_workers=50) # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
+  max_wrk = 50
+  print("Fetching Locations and Timestamps on each picture ... " + str(len(links)) + " links processed asynchronously by a pool of " + str(max_wrk) , end="\r")
+  executor = ThreadPoolExecutor(max_workers=max_wrk) # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
   loop = asyncio.get_event_loop()
 
   async def make_requests():
@@ -52,16 +73,29 @@ def fetch_locations_and_timestamps(links):
 
   links_locations_timestamps = []
   futures = loop.run_until_complete(make_requests())
-  for i in range(0, len(futures)):
-    page_content = futures[i].result().text
-    tmp_loc = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', page_content)
-    if tmp_loc  != None:
-      tmp_timestamp = re.search('"uploadDate":"([^"]+)"', page_content)[0].split('T')[0]
-      links_locations_timestamps.append(['https://www.instagram.com/p/'+links[i], tmp_loc.group(1).replace('-', ' '), re.sub('[^0-9\-]', '', tmp_timestamp)])
+  number_locs = len(futures)
+  count = 0
+
+  for i in range(0, number_locs):
+    content = futures[i].result().text
+    location_timestamp = parse_location_timestamp(content)
+    if location_timestamp != None:
+      count += 1
+      links_locations_timestamps.append(['https://www.instagram.com/p/'+links[i], location_timestamp[0], location_timestamp[1]])
+      
+    print("Parsing location data ... " + str(i) + "/" + str(number_locs) + " links processed... " + " Found location data on " + str(count) + " links" , end="\r")
   return links_locations_timestamps
 
 def geocode(location):
-    return requests.get("https://nominatim.openstreetmap.org/search?q=" + location[1] + "&format=json&limit=1").json()[0]
+    query = "https://nominatim.openstreetmap.org/search?"
+    # if location[0] != "Error":
+    #     query += "street=" + location[0] + "&"
+    if location[1] != "Error":
+        query += "city=" + location[1] + "&"
+    if location[2] != "Error":
+        query += "countrycode=" + location[2] + "&"
+    print(query + "format=json&limit=1")
+    return requests.get(query + "&format=json&limit=1").json()[0]
 
 def geocode_all(links_locations_and_timestamps):
   sys.stdout.write("\033[K")
@@ -72,10 +106,10 @@ def geocode_all(links_locations_and_timestamps):
   for location in links_locations_and_timestamps:
       print("Fetching GPS Coordinates ... : Processing location number " + str(count) + " out of " + str(len(links_locations_and_timestamps)) + " - Number of errors:" + str(errors), end="\r")
       try:
-          tmp_geoloc = geocode(location)
+          tmp_geoloc = geocode(location[1])
           gps_coordinates.append([tmp_geoloc['lat'], tmp_geoloc['lon']])
       except:
-          print("An exception occurred for: " + location[1])
+          print("An exception occurred for: " + str(location[1]))
           errors+=1
           gps_coordinates.append("Error")
       time.sleep(1) # Respect Normatim's Usage Policy! (1 request per sec max) https://operations.osmfoundation.org/policies/nominatim/
@@ -88,15 +122,20 @@ def geocode_all(links_locations_and_timestamps):
 def export_data(links_locations_and_timestamps, gps_coordinates):
 
   json_dump = []
+  errors = []
 
   for i in range(0, len(links_locations_and_timestamps)):
     links_locations_and_timestamps[i].append(gps_coordinates[i])
     if gps_coordinates[i] != "Error":
       json_dump.append({"link" : links_locations_and_timestamps[i][0],"place" : links_locations_and_timestamps[i][1], "timestamp" : links_locations_and_timestamps[i][2], "gps" : {"lat" : links_locations_and_timestamps[i][3][0] ,  "lon" : links_locations_and_timestamps[i][3][1]}})
-    
+    else:
+      errors.append(({"link" : links_locations_and_timestamps[i][0],"place" : links_locations_and_timestamps[i][1], "timestamp" : links_locations_and_timestamps[i][2], "gps" : "Error"}))
   with open(username + '_instaloctrack_data.json', 'w') as filehandle:
     json.dump(json_dump, filehandle)
-  print("Location names, timestamps, and GPS Coordinates were writtent to :" + username + '_instaloctrack_data.json')
+
+  with open(username + '_instaloctrack_errors.json', 'w') as filehandle:
+    json.dump(errors, filehandle)
+  print("Location names, timestamps, and GPS Coordinates were writtent to : " + username + '_instaloctrack_data.json')
 
 def draw_map(gps_coordinates):
 
@@ -160,7 +199,7 @@ def draw_map(gps_coordinates):
   mapfile = open(username + "_instaloctrack_map.html", "w")
   mapfile.write(map)
   mapfile.close()
-  print("Map with all the markers was written to:" + username + '_instaloctrack_map.html')
+  print("Map with all the markers was written to: " + username + '_instaloctrack_map.html')
 
 links = fetch_urls(number_publications)
 browser.quit()
