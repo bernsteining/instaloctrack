@@ -77,3 +77,4 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
 * Correct encoding errors on some locations (ex: Villeneuve-d&#x27;Ascq")
+* Use OOP programming rather than lists and indexes
