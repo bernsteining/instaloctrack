@@ -17,6 +17,80 @@ browser.get('https://www.instagram.com/'+username+'/?hl=fr')
 
 number_publications = browser.find_element_by_xpath("/html/body").text.strip().split("\n")[3].split(" ")[0] 
 
+special_chars =  {
+    "\\u00c0" : "À",
+    "\\u00c1" : "Á",
+    "\\u00c2" : "Â",
+    "\\u00c3" : "Ã",
+    "\\u00c4" : "Ä",
+    "\\u00c5" : "Å",
+    "\\u00c6" : "Æ",
+    "\\u00c7" : "Ç",
+    "\\u00c8" : "È",
+    "\\u00c9" : "É",
+    "\\u00ca" : "Ê",
+    "\\u00cb" : "Ë",
+    "\\u00cc" : "Ì",
+    "\\u00cd" : "Í",
+    "\\u00ce" : "Î",
+    "\\u00cf" : "Ï",
+    "\\u00d1" : "Ñ",
+    "\\u00d2" : "Ò",
+    "\\u00d3" : "Ó",
+    "\\u00d4" : "Ô",
+    "\\u00d5" : "Õ",
+    "\\u00d6" : "Ö",
+    "\\u00d8" : "Ø",
+    "\\u00d9" : "Ù",
+    "\\u00da" : "Ú",
+    "\\u00db" : "Û",
+    "\\u00dc" : "Ü",
+    "\\u00dd" : "Ý",
+    "\\u00df" : "ß",
+    "\\u00e0" : "à",
+    "\\u00e1" : "á",
+    "\\u00e2" : "â",
+    "\\u00e3" : "ã",
+    "\\u00e4" : "ä",
+    "\\u00e5" : "å",
+    "\\u00e6" : "æ",
+    "\\u00e7" : "ç",
+    "\\u00e8" : "è",
+    "\\u00e9" : "é",
+    "\\u00ea" : "ê",
+    "\\u00eb" : "ë",
+    "\\u00ec" : "ì",
+    "\\u00ed" : "í",
+    "\\u00ee" : "î",
+    "\\u00ef" : "ï",
+    "\\u00f0" : "ð",
+    "\\u00f1" : "ñ",
+    "\\u00f2" : "ò",
+    "\\u00f3" : "ó",
+    "\\u00f4" : "ô",
+    "\\u00f5" : "õ",
+    "\\u00f6" : "ö",
+    "\\u00f8" : "ø",
+    "\\u00f9" : "ù",
+    "\\u00fa" : "ú",
+    "\\u00fb" : "û",
+    "\\u00fc" : "ü",
+    "\\u00fd" : "ý",
+    "\\u00ff" : "ÿ",
+    "&#x27;" : "'"
+}
+
+def resolve_special_chars(location):
+    matches = re.findall("(\\\\u00[\w+]{2}|&#x27;)", location) #catch special chars
+    if matches != []:
+      for special_char in matches:
+        if "u" in special_char:
+            location = location.replace(special_char,special_chars.get( special_char, ""))
+        else:
+             location = location.replace(special_char,special_chars.get( special_char, ""))
+        
+    return location
+
 def scrolls(publications): # scrolls required to snag all the data accordingly to the number of posts
     return (int(publications))//11
     #return 1 #for testing purpose
@@ -38,16 +112,21 @@ def parse_location_timestamp(content):
     location = []
     try:
         address = re.search(r'\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/', content).group(1).replace("-", " ")
+        address = resolve_special_chars(address)
     except:
         address= "Error"
     
     try:
         city = re.search('"addressLocality":"([^"]+)"', content)[0].split(":")[1].split(",")[0].replace("\"", "")
+        #city = re.search('"city_name":"([^"]+)"', content)[0].split(":")[1].split(",")[0].replace("\"", "")
+        city = resolve_special_chars(city)
+              
     except:
         city = "Error"
     
     try:
         countrycode = re.search('Country","name":"([^"]+)"', content)[0].split(":")[1].replace("\"", "")
+        countrycode = resolve_special_chars(countrycode)
     except:
         countrycode = "Error"
     
@@ -84,17 +163,20 @@ def fetch_locations_and_timestamps(links):
       links_locations_timestamps.append(['https://www.instagram.com/p/'+links[i], location_timestamp[0], location_timestamp[1]])
       
     print("Parsing location data ... " + str(i) + "/" + str(number_locs) + " links processed... " + " Found location data on " + str(count) + " links" , end="\r")
+  tmplist = [x[0] for x in links_locations_timestamps]
+  print(tmplist)
   return links_locations_timestamps
+
+
 
 def geocode(location):
     query = "https://nominatim.openstreetmap.org/search?"
-    # if location[0] != "Error":
-    #     query += "street=" + location[0] + "&"
+    if location[0] != "Error":
+        query += "q=" + resolve_special_chars(location[0]) + "&"
     if location[1] != "Error":
         query += "city=" + location[1] + "&"
     if location[2] != "Error":
-        query += "countrycode=" + location[2] + "&"
-    print(query + "format=json&limit=1")
+        query += "countrycodes=" + location[2] + "&"
     return requests.get(query + "&format=json&limit=1").json()[0]
 
 def geocode_all(links_locations_and_timestamps):
@@ -137,7 +219,9 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
     json.dump(errors, filehandle)
   print("Location names, timestamps, and GPS Coordinates were writtent to : " + username + '_instaloctrack_data.json')
 
-def draw_map(gps_coordinates):
+  return len(json_dump),len(errors)
+
+def draw_map():
 
   map = """
   <html>
@@ -149,7 +233,10 @@ def draw_map(gps_coordinates):
   <body>
     <ul style="list-style-type:square;">
       <li>Instagram profile: """ +   """ <a href= """ + "https://www.instagram.com/" + username + """>""" + "@"+ username  +"""</a></li>
-      <li>Number of locations mapped: """ + str(len(links_locations_and_timestamps)) + """</li>
+      <li>Number of Instagram posts: """ + str(number_publications) + """</li>
+      <li>Number of locations retrieved: """ + str(len(links_locations_and_timestamps)) + """</li>
+      <li>Number of locations mapped: """ + str(numbers[0]) + """</li>
+      <li>Number of errors: """ + str(numbers[1]) + """</li>
     </ul>
     <div id="infos"> </div>
     <div id="map" style="height: 400px; width: 500px;">
@@ -205,5 +292,6 @@ links = fetch_urls(number_publications)
 browser.quit()
 links_locations_and_timestamps = fetch_locations_and_timestamps(links)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
-export_data(links_locations_and_timestamps, gps_coordinates)
-draw_map(gps_coordinates)
+numbers = export_data(links_locations_and_timestamps, gps_coordinates)
+draw_map()
+
