@@ -31,7 +31,8 @@ For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usag
 Eventually, once we have all the GPS coordinatess, we generate a HTML page with Javascript embedded that plots a Google Map with all our locations pinned. Once again, no API key is required for this step.
 For this final step, I have to thank [Tania Rascia's project](https://www.taniarascia.com/google-maps-apis-for-multiple-locations/) which provides such a feature.
 
-Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used.
+Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used, so are errors encountered.
+
 
 
 
@@ -73,8 +74,9 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Time information about the duration of the script
 * Templating using web2py, django or jinja2 to generate the web map instead of hardcoding the HTML in the script. Might be an overkill tho
-*  On Instagram's mobile App, it's possible to get the exact coordinates within a few clicks on the location's information ... maybe we could use this technique while scraping to get the exact GPS coords? 
 * Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
-* Correct encoding errors on some locations (ex: Villeneuve-d&#x27;Ascq")
 * Use OOP programming rather than lists and indexes
+* Use GeoJSON WGS-84 (EPSG 4326) format
+* Use https://geo.api.gouv.fr/adresse & other geocoding/geoint tools ?
+* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
