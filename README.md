@@ -73,8 +73,6 @@ The JSON data dump (just a part of it to show the format for a given location):
 
 * Cleaner code :D
 * Time information about the duration of the script
-* Templating using web2py, django or jinja2 to generate the web map instead of hardcoding the HTML in the script. Might be an overkill tho
-* Keep a track of the errors encountered during the script : Sometimes some location names aren't precise enough for Nominatim to geocode it ... We might want to keep these informations in a JSON rather than just print on the console.
 * Add an argument to select only a set of pictures (selected by date, or rank)
 * Use OOP programming rather than lists and indexes
 * Use GeoJSON WGS-84 (EPSG 4326) format
