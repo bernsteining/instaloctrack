@@ -72,6 +72,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 ## Possible Improvements
 
 * Cleaner code :D
+* Clean projects architecture (script output in specific folder, one folder per Instagram account ...)
 * Time information about the duration of the script
 * Add an argument to select only a set of pictures (selected by date, or rank)
 * Use OOP programming rather than lists and indexes
