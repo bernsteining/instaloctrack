@@ -5,6 +5,7 @@ import json
 import requests
 import sys
 import asyncio 
+import jinja2
 from concurrent.futures import ThreadPoolExecutor
 
 if len(sys.argv) < 2:
@@ -84,13 +85,9 @@ def resolve_special_chars(location):
     matches = re.findall("(\\\\u00[\w+]{2}|&#x27;)", location) #catch special chars
     if matches != []:
       for special_char in matches:
-        if "u" in special_char:
             location = location.replace(special_char,special_chars.get( special_char, ""))
-        else:
-             location = location.replace(special_char,special_chars.get( special_char, ""))
-        
     return location
-
+        
 def scrolls(publications): # scrolls required to snag all the data accordingly to the number of posts
     return (int(publications))//11
     #return 1 #for testing purpose
@@ -221,77 +218,31 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
 
   return len(json_dump),len(errors)
 
-def draw_map():
+def map_locations():
+  templateLoader = jinja2.FileSystemLoader(searchpath="./")
+  templateEnv = jinja2.Environment(loader=templateLoader)
+  template = templateEnv.get_template("template.html")
+  outputText = template.render(username=username, 
+                                                              publications_number=number_publications, 
+                                                              retrieved_number=len(links_locations_and_timestamps), 
+                                                              mapped_number=numbers[0], 
+                                                              links=str([x[0] for x in links_locations_and_timestamps]), 
+                                                              errors_number=numbers[0], 
+                                                              places=str([x[1] for x in links_locations_and_timestamps]), 
+                                                              timestamps=str([x[2] for x in links_locations_and_timestamps]), 
+                                                              locations=str(gps_coordinates)) 
 
-  map = """
-  <html>
-  <head>
-    
-    <title>Google Maps Multiple Markers</title>
-    <script src="http://maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
-  </head>
-  <body>
-    <ul style="list-style-type:square;">
-      <li>Instagram profile: """ +   """ <a href= """ + "https://www.instagram.com/" + username + """>""" + "@"+ username  +"""</a></li>
-      <li>Number of Instagram posts: """ + str(number_publications) + """</li>
-      <li>Number of locations retrieved: """ + str(len(links_locations_and_timestamps)) + """</li>
-      <li>Number of locations mapped: """ + str(numbers[0]) + """</li>
-      <li>Number of errors: """ + str(numbers[1]) + """</li>
-    </ul>
-    <div id="infos"> </div>
-    <div id="map" style="height: 400px; width: 500px;">
-  </div>
-  <script type="text/javascript">
-      var links = """ + str([x[0] for x in links_locations_and_timestamps]) + """;
-      var places = """ + str([x[1] for x in links_locations_and_timestamps]) + """;
-      var timestamps = """ + str([x[2] for x in links_locations_and_timestamps]) + """;
-      var locations = """ + str(gps_coordinates) + """;
+  with open(username + "_instaloctrack_map.html", 'w') as f:
+      f.write(outputText)
+      f.close()
+      print("Map with all the markers was written to: " + username + '_instaloctrack_map.html')
 
-      var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 1,
-        center: new google.maps.LatLng(48.866667, 2.333333),
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-      });
-
-      var infowindow = new google.maps.InfoWindow();
-
-      var marker, i;
-
-      for (i = 0; i < locations.length; i++) { 
-        marker = new google.maps.Marker({
-          position: new google.maps.LatLng(locations[i][0], locations[i][1]),
-          map: map,
-        });
-
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-          return function() {
-
-             html =  '<ul style="list-style-type:square;">'
-             html += '<li>Picture link: <a href=' + links[i] + '>Link</a></li>'
-             html += '<li>Place name: ' + places[i] + '</li>'
-             html += '<li>Timestamp: ' + timestamps[i] + '</li>'
-             html += '<li>Lattitude: ' + locations[i][0] + '</li>'
-             html += '<li>Longitude: ' + locations[i][1] + '</li>'
-             html += '</ul>'
-             infowindow.setContent(html);
-            infowindow.open(map, marker);
-          }
-        })(marker, i));
-      }
-    </script>
-  </body>
-  </html>
-  """
-
-  mapfile = open(username + "_instaloctrack_map.html", "w")
-  mapfile.write(map)
-  mapfile.close()
-  print("Map with all the markers was written to: " + username + '_instaloctrack_map.html')
 
 links = fetch_urls(number_publications)
 browser.quit()
 links_locations_and_timestamps = fetch_locations_and_timestamps(links)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 numbers = export_data(links_locations_and_timestamps, gps_coordinates)
-draw_map()
+map_locations()
+
 
