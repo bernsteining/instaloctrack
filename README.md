@@ -72,10 +72,13 @@ The JSON data dump (just a part of it to show the format for a given location):
 ## Possible Improvements
 
 * Cleaner code :D
-* Clean projects architecture (script output in specific folder, one folder per Instagram account ...)
-* Time information about the duration of the script
-* Add an argument to select only a set of pictures (selected by date, or rank)
 * Use OOP programming rather than lists and indexes
+* Provide statistics about the location data (most visited place, heatmap, diagrams ...)
+* Better Geocoding :
+	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
+	* Retry Geocoding when it fails because of the first field: happens when it's too precise, then the location of the city rather than the exact place would be better than just an error imo.
+	* Use other geocoding tools (e.g. https://geo.api.gouv.fr/adresse) than Nominatim when it fails? (specify arg?)
+* Add an argument to select only a set of pictures (selected by date, or rank)
 * Use GeoJSON WGS-84 (EPSG 4326) format
-* Use https://geo.api.gouv.fr/adresse & other geocoding/geoint tools ?
-* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
+* Time information about the duration of the script
+
