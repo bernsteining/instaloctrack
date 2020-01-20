@@ -2,3 +2,4 @@ selenium
 requests
 asyncio 
 jinja2
+argparse
