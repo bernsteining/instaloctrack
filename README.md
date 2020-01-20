@@ -1,6 +1,6 @@
 # Insta LocTrack
 
-A SOCMINT project I made in this week for an OSINT course I had.
+A SOCMINT project I made this week for an OSINT course I had.
 
 TL;DR : Here's a video of the script being launched : [https://www.youtube.com/watch?v=BKlTnBWupr0](https://www.youtube.com/watch?v=BKlTnBWupr0) (previous version tho !)
 
