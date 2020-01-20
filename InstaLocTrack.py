@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import time
 import re
 import json
@@ -7,17 +8,56 @@ import sys
 import os
 import asyncio
 import jinja2
+import argparse
 from concurrent.futures import ThreadPoolExecutor
 
-if len(sys.argv) < 2:
-    print("Usage: python3 instaloctrack.py <username>")
-    exit()
+parser = argparse.ArgumentParser(
+    description=
+    "Instagram location data gathering tool.  Usage: python3 InstaLocTrack.py -t <target_account>",
+    prog="InstaLocTrack")
 
-username = sys.argv[1]  # Instagram account to investigate
-browser = webdriver.Chrome("/usr/bin/chromedriver")
-browser.get("https://www.instagram.com/" + username + "/?hl=fr")
-number_publications = re.search(", ([0-9]+) publications",
-                                browser.page_source).group(1)
+parser.add_argument(
+    "-t",
+    "--target",
+    dest="target_account",
+    help="Instagram profile to investigate",
+)
+
+parser.add_argument(
+    "-l",
+    "--login",
+    dest="login",
+    help=
+    "Instagram profile to connect to, in order to access the instagram posts of the target account",
+)
+
+parser.add_argument(
+    "-p",
+    "--password",
+    dest="password",
+    help="Password of the Instagram profile to connect to",
+)
+
+parser.add_argument(
+    "-v",
+    "--visual",
+    action='store_true',
+    dest="visual",
+    help="Spawns Chromium GUI, otherwise Chromium is headless",
+)
+
+args = parser.parse_args()
+
+
+def launch_browser(option):
+    if option is None:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        return webdriver.Chrome("/usr/bin/chromedriver",
+                                chrome_options=chrome_options)
+    else:
+        return webdriver.Chrome("/usr/bin/chromedriver")
+
 
 special_chars = {
     "\\u00c0": "À",
@@ -81,6 +121,19 @@ special_chars = {
     "\\u00ff": "ÿ",
     "&#x27;": "'",
 }
+
+
+def login(account, password):
+    browser.get("https://www.instagram.com/accounts/login/")
+    time.sleep(1)  #find element won't work if this is removed
+
+    login = browser.find_element_by_xpath("//input[@name='username']")
+    passwd = browser.find_element_by_xpath("//input[@name='password']")
+    login.send_keys(account)
+    passwd.send_keys(password)
+    login.submit()
+    time.sleep(2)
+    browser.get("https://www.instagram.com/" + args.target_account)
 
 
 def resolve_special_chars(location):
@@ -254,7 +307,7 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
     json_dump = []
     errors = []
 
-    os.makedirs("output/" + username, exist_ok=True)
+    os.makedirs("output/" + args.target_account, exist_ok=True)
 
     for i in range(0, len(links_locations_and_timestamps)):
         links_locations_and_timestamps[i].append(gps_coordinates[i])
@@ -276,17 +329,18 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
                 "gps": "Error",
             }))
     with open(
-            "output/" + username + "/" + username + "_instaloctrack_data.json",
-            "w") as filehandle:
+            "output/" + args.target_account + "/" + args.target_account +
+            "_instaloctrack_data.json", "w") as filehandle:
         json.dump(json_dump, filehandle)
 
     with open(
-            "output/" + username + "/" + username +
+            "output/" + args.target_account + "/" + args.target_account +
             "_instaloctrack_errors.json", "w") as filehandle:
         json.dump(errors, filehandle)
     print(
         "Location names, timestamps, and GPS Coordinates were written to : output/"
-        + username + "/" + username + "_instaloctrack_data.json")
+        + args.target_account + "/" + args.target_account +
+        "_instaloctrack_data.json")
 
     return len(json_dump), len(errors)
 
@@ -296,7 +350,7 @@ def map_locations():
     templateEnv = jinja2.Environment(loader=templateLoader)
     template = templateEnv.get_template("template.html")
     outputText = template.render(
-        username=username,
+        target_account=args.target_account,
         publications_number=number_publications,
         retrieved_number=len(links_locations_and_timestamps),
         mapped_number=numbers[0],
@@ -308,13 +362,26 @@ def map_locations():
     )
 
     with open(
-            "output/" + username + "/" + username + "_instaloctrack_map.html",
-            "w") as f:
+            "output/" + args.target_account + "/" + args.target_account +
+            "_instaloctrack_map.html", "w") as f:
         f.write(outputText)
         f.close()
-        print("Map with all the markers was written to: output/" + username +
-              "/" + username + "_instaloctrack_map.html")
+        print("Map with all the markers was written to: output/" +
+              args.target_account + "/" + args.target_account +
+              "_instaloctrack_map.html")
 
+
+browser = launch_browser(args.visual)
+
+if args.login is not None and args.password is not None:
+    login(args.login, args.password)
+
+browser.get("https://www.instagram.com/" + args.target_account + "/?hl=fr")
+# number_publications = re.search(", ([0-9]+) publications",
+#                                 browser.page_source).group(1)
+
+number_publications = re.search("([0-9]+)</span> publications",
+                                browser.page_source).group(1)
 
 links = fetch_urls(number_publications)
 browser.quit()
