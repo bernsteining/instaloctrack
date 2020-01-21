@@ -1,3 +1,4 @@
+
 # Insta LocTrack
 
 A SOCMINT project I made this week for an OSINT course I had.
@@ -12,7 +13,7 @@ I doesn't use Instagram's API since Instagram deprecated its location functional
 ## requirements
 
 sudo apt install chromium-chromedriver &&
-pip install -r requirements
+sudo pip install -r requirements
 
 
 
@@ -34,15 +35,32 @@ For this final step, I have to thank [Tania Rascia's project](https://www.taniar
 Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used, so are errors encountered.
 
 
+## Usage
+
+    python3 InstaLocTrack.py -h
+    usage: InstaLocTrack [-h] [-t TARGET_ACCOUNT] [-l LOGIN] [-p PASSWORD] [-v]
+    
+    Instagram location data gathering tool. Usage: python3 InstaLocTrack.py -t <target_account>
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -t TARGET_ACCOUNT, --target TARGET_ACCOUNT
+                            Instagram profile to investigate
+      -l LOGIN, --login LOGIN
+                            Instagram profile to connect to, in order to access
+                            the instagram posts of the target account
+      -p PASSWORD, --password PASSWORD
+                            Password of the Instagram profile to connect to
+      -v, --visual          Spawns Chromium GUI, otherwise Chromium is headless
 
 
 ## Example
 
 As an example, here's the output on the former French President's Instagram profile, [@fhollande](https://www.instagram.com/fhollande/?hl=fr) :
 
-As you can see, some locations aren't accurate enough to geocode them. The script handles this errors, and alerts the user about them on the console.
+As you can see, some locations aren't accurate enough to geocode them. The script handles this errors, and alerts the user about them on the console, and dumps a json or the errors.
 
-The map:
+**The map**:
 ![Map of @fhollande's locations on Instagram](https://imgur.com/FRaa2zO.png
 )
 
@@ -74,6 +92,9 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Use OOP programming rather than lists and indexes
 * User login feature to scan private profiles you're legitimately subscribed to [WIP]
+* Asynchronous Webdriver : arsenic ?
+* Better scraping of the geo data available ... more fields
+* key-values for every field of the JSON
 * best way to provide fast results : requests asynchronously?
 * Provide statistics about the location data (most visited place, heatmap, diagrams ...)
 * Better Geocoding :
