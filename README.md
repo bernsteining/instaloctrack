@@ -106,4 +106,5 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Add an argument to select only a set of pictures (selected by date, or rank)
 * Use GeoJSON WGS-84 (EPSG 4326) format
 * Time information about the duration of the script
+* The whole Instagram profile isn't scrolled if your connection is slow ... maybe gonna add a parameter to correct this
 
