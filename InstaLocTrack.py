@@ -397,7 +397,7 @@ browser = launch_browser(args.visual)
 logged_in = False
 
 if args.login is not None and args.password is not None:
-    login(args.login, args.password)
+    logged_in = login(args.login, args.password)
 
 browser.get("https://www.instagram.com/" + args.target_account + "/?hl=fr")
 # number_publications = re.search(", ([0-9]+) publications",
@@ -408,10 +408,10 @@ number_publications = re.search("([0-9]+)</span> publications",
 
 links = fetch_urls(number_publications)
 if logged_in:
-    browser.quit()
     links_locations_and_timestamps = fetch_locations_and_timestamps_logged(
         links)
 else:
+    browser.quit()
     links_locations_and_timestamps = fetch_locations_and_timestamps_not_logged(
         links)
 
