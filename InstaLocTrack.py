@@ -125,16 +125,24 @@ def launch_browser(option):
 
 
 def login(account, password):
-    browser.get("https://www.instagram.com/accounts/login/")
-    time.sleep(1)  #find element won't work if this is removed
+    try:
+        print(
+            "Logging in with " + account + "'s Instagram account ...",
+            end="\r",
+        )
+        browser.get("https://www.instagram.com/accounts/login/")
+        time.sleep(1)  #find element won't work if this is removed
 
-    login = browser.find_element_by_xpath("//input[@name='username']")
-    passwd = browser.find_element_by_xpath("//input[@name='password']")
-    login.send_keys(account)
-    passwd.send_keys(password)
-    login.submit()
-    time.sleep(2)
-    browser.get("https://www.instagram.com/" + args.target_account)
+        login = browser.find_element_by_xpath("//input[@name='username']")
+        passwd = browser.find_element_by_xpath("//input[@name='password']")
+        login.send_keys(account)
+        passwd.send_keys(password)
+        login.submit()
+        time.sleep(2)
+        browser.get("https://www.instagram.com/" + args.target_account)
+        return True
+    except:
+        return False
 
 
 def resolve_special_chars(location):
@@ -163,8 +171,8 @@ def fetch_urls(number_publications):
             n_scrolls
     ):  # collecting all the pictures links in order to see which ones contains location data
         print(
-            "Scrolling the Instagram profile, fetching pictures URLs ..." +
-            str(100 * i // n_scrolls) + "% of the profile scrolled ",
+            "Scrolling the Instagram target profile, fetching pictures URLs ..."
+            + str(100 * i // n_scrolls) + "% of the profile scrolled ",
             end="\r",
         )
         browser.execute_script(
@@ -178,10 +186,13 @@ def fetch_urls(number_publications):
 
 
 def parse_location_timestamp(content):
+    # example "{\"street_address\": \"57 Rue des Batignolles\", \"zip_code\": \"75017\", \"city_name\": \"Paris, France\", \"region_name\": \"\", \"country_code\": \"FR\"
+    # "location":{"id":"235793184","has_public_page":true,"name":"Square de la tour Saint-Jacques","slug":"square-de-la-tour-saint-jacques","address_json":"{\"street_address\": \"\", \"zip_code\": \"\", \"city_name\": \"Paris, France\", \"region_name\": \"\", \"country_code\": \"FR\"
     location = []
     try:
-        address = (re.search(r"\\/explore\\/locations\\/[0-9]+\\/([^/]+)\\/",
-                             content).group(1).replace("-", " "))
+        address = (re.search(
+            r"[\\]{0,1}/explore[\\]{0,1}/locations[\\]{0,1}/[0-9]+[\\]{0,1}/([^/]+)[\\]{0,1}/",
+            content).group(1).replace("-", " "))
         address = resolve_special_chars(address)
     except:
         address = "Error"
@@ -213,52 +224,77 @@ def parse_location_timestamp(content):
         return None
 
 
-def fetch_locations_and_timestamps(links):
-    sys.stdout.write("\033[K")
-    max_wrk = 50
-    print(
-        "Fetching Locations and Timestamps on each picture ... " +
-        str(len(links)) + " links processed asynchronously by a pool of " +
-        str(max_wrk),
-        end="\r",
-    )
-    executor = ThreadPoolExecutor(
-        max_workers=max_wrk
-    )  # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
-    loop = asyncio.get_event_loop()
+def fetch_locations_and_timestamps(links, logged_in):
 
-    async def make_requests():
-        futures = [
-            loop.run_in_executor(executor, requests.get,
-                                 "https://www.instagram.com/p/" + url)
-            for url in links
-        ]
-        await asyncio.wait(futures)
-        return futures
-
-    links_locations_timestamps = []
-    futures = loop.run_until_complete(make_requests())
-    number_locs = len(futures)
-    count = 0
-
-    for i in range(0, number_locs):
-        content = futures[i].result().text
-        location_timestamp = parse_location_timestamp(content)
-        if location_timestamp != None:
-            count += 1
-            links_locations_timestamps.append([
-                "https://www.instagram.com/p/" + links[i],
-                location_timestamp[0],
-                location_timestamp[1],
-            ])
-
+    if logged_in:
+        sys.stdout.write("\033[K")
+        max_wrk = 50
         print(
-            "Parsing location data ... " + str(i) + "/" + str(number_locs) +
-            " links processed... " + " Found location data on " + str(count) +
-            " links",
+            "Fetching Locations and Timestamps on each picture ... " +
+            str(len(links)) + " links processed asynchronously by a pool of " +
+            str(max_wrk),
             end="\r",
         )
-    return links_locations_timestamps
+        executor = ThreadPoolExecutor(
+            max_workers=max_wrk
+        )  # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
+        loop = asyncio.get_event_loop()
+
+        async def make_requests():
+            futures = [
+                loop.run_in_executor(executor, requests.get,
+                                     "https://www.instagram.com/p/" + url)
+                for url in links
+            ]
+            await asyncio.wait(futures)
+            return futures
+
+        links_locations_timestamps = []
+        futures = loop.run_until_complete(make_requests())
+        number_locs = len(futures)
+        count = 0
+
+        for i in range(0, number_locs):
+            content = futures[i].result().text
+            location_timestamp = parse_location_timestamp(content)
+            if location_timestamp != None:
+                count += 1
+                links_locations_timestamps.append([
+                    "https://www.instagram.com/p/" + links[i],
+                    location_timestamp[0],
+                    location_timestamp[1],
+                ])
+
+            print(
+                "Parsing location data ... " + str(i) + "/" +
+                str(number_locs) + " links processed... " +
+                " Found location data on " + str(count) + " links",
+                end="\r",
+            )
+        return links_locations_timestamps
+
+    else:
+        sys.stdout.write("\033[K")
+        links_locations_and_timestamps = []
+        counter = 1
+        for link in links:  # iterate over the links, collect location and timestamps if a location is available on the Instagram post
+            print("Checking Locations on each picture : Picture " +
+                  str(counter) + " out of " + str(len(links)) + " - " +
+                  str(len(links_locations_and_timestamps)) +
+                  " Locations collected",
+                  end="\r")
+            browser.get('https://www.instagram.com/p/' + link)
+            print(browser.page_source)
+            location_timestamp = parse_location_timestamp(browser.page_source)
+            if location_timestamp != None:
+                counter += 1
+                links_locations_timestamps.append([
+                    "https://www.instagram.com/p/" + link,
+                    location_timestamp[0],
+                    location_timestamp[1],
+                ])
+            counter += 1
+        return links_locations_and_timestamps
 
 
 def geocode(location):
@@ -374,6 +410,8 @@ def map_locations():
 
 browser = launch_browser(args.visual)
 
+logged_in = False
+
 if args.login is not None and args.password is not None:
     login(args.login, args.password)
 
@@ -385,8 +423,10 @@ number_publications = re.search("([0-9]+)</span> publications",
                                 browser.page_source).group(1)
 
 links = fetch_urls(number_publications)
-browser.quit()
-links_locations_and_timestamps = fetch_locations_and_timestamps(links)
+if logged_in:
+    browser.quit()
+links_locations_and_timestamps = fetch_locations_and_timestamps(
+    links, logged_in)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 
 numbers = export_data(links_locations_and_timestamps, gps_coordinates)
