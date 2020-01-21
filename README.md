@@ -94,6 +94,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 * key-values for every field of the JSON
 * best way to provide fast results : requests asynchronously?
 * Provide statistics about the location data (most visited place, heatmap, diagrams ...)
+* Interactive dashboard instead of static html/JS output
 * Better Geocoding :
 	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
 	* Retry Geocoding when it fails because of the first field: happens when it's too precise, then the location of the city rather than the exact place would be better than just an error imo.
