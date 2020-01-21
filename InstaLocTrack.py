@@ -229,7 +229,7 @@ def fetch_locations_and_timestamps(links):
 
     async def make_requests():
         futures = [
-            loop.run_in_executor(executor, browser.get,
+            loop.run_in_executor(executor, requests.get,
                                  "https://www.instagram.com/p/" + url)
             for url in links
         ]
@@ -385,6 +385,7 @@ number_publications = re.search("([0-9]+)</span> publications",
                                 browser.page_source).group(1)
 
 links = fetch_urls(number_publications)
+browser.quit()
 links_locations_and_timestamps = fetch_locations_and_timestamps(links)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 
