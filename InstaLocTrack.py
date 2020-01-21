@@ -10,8 +10,6 @@ import os
 import asyncio
 import jinja2
 import argparse
-from arsenic import get_session
-from arsenic.browsers import Chrome
 from concurrent.futures import ThreadPoolExecutor
 
 parser = argparse.ArgumentParser(
@@ -51,68 +49,75 @@ parser.add_argument(
 args = parser.parse_args()
 
 special_chars = {
-    "\\u00c0": "À",
-    "\\u00c1": "Á",
-    "\\u00c2": "Â",
-    "\\u00c3": "Ã",
-    "\\u00c4": "Ä",
-    "\\u00c5": "Å",
-    "\\u00c6": "Æ",
-    "\\u00c7": "Ç",
-    "\\u00c8": "È",
-    "\\u00c9": "É",
-    "\\u00ca": "Ê",
-    "\\u00cb": "Ë",
-    "\\u00cc": "Ì",
-    "\\u00cd": "Í",
-    "\\u00ce": "Î",
-    "\\u00cf": "Ï",
-    "\\u00d1": "Ñ",
-    "\\u00d2": "Ò",
-    "\\u00d3": "Ó",
-    "\\u00d4": "Ô",
-    "\\u00d5": "Õ",
-    "\\u00d6": "Ö",
-    "\\u00d8": "Ø",
-    "\\u00d9": "Ù",
-    "\\u00da": "Ú",
-    "\\u00db": "Û",
-    "\\u00dc": "Ü",
-    "\\u00dd": "Ý",
-    "\\u00df": "ß",
-    "\\u00e0": "à",
-    "\\u00e1": "á",
-    "\\u00e2": "â",
-    "\\u00e3": "ã",
-    "\\u00e4": "ä",
-    "\\u00e5": "å",
-    "\\u00e6": "æ",
-    "\\u00e7": "ç",
-    "\\u00e8": "è",
-    "\\u00e9": "é",
-    "\\u00ea": "ê",
-    "\\u00eb": "ë",
-    "\\u00ec": "ì",
-    "\\u00ed": "í",
-    "\\u00ee": "î",
-    "\\u00ef": "ï",
-    "\\u00f0": "ð",
-    "\\u00f1": "ñ",
-    "\\u00f2": "ò",
-    "\\u00f3": "ó",
-    "\\u00f4": "ô",
-    "\\u00f5": "õ",
-    "\\u00f6": "ö",
-    "\\u00f8": "ø",
-    "\\u00f9": "ù",
-    "\\u00fa": "ú",
-    "\\u00fb": "û",
-    "\\u00fc": "ü",
-    "\\u00fd": "ý",
-    "\\u00ff": "ÿ",
+    "u00c0": "À",
+    "u00c1": "Á",
+    "u00c2": "Â",
+    "u00c3": "Ã",
+    "u00c4": "Ä",
+    "u00c5": "Å",
+    "u00c6": "Æ",
+    "u00c7": "Ç",
+    "u00c8": "È",
+    "u00c9": "É",
+    "u00ca": "Ê",
+    "u00cb": "Ë",
+    "u00cc": "Ì",
+    "u00cd": "Í",
+    "u00ce": "Î",
+    "u00cf": "Ï",
+    "u00d1": "Ñ",
+    "u00d2": "Ò",
+    "u00d3": "Ó",
+    "u00d4": "Ô",
+    "u00d5": "Õ",
+    "u00d6": "Ö",
+    "u00d8": "Ø",
+    "u00d9": "Ù",
+    "u00da": "Ú",
+    "u00db": "Û",
+    "u00dc": "Ü",
+    "u00dd": "Ý",
+    "u00df": "ß",
+    "u00e0": "à",
+    "u00e1": "á",
+    "u00e2": "â",
+    "u00e3": "ã",
+    "u00e4": "ä",
+    "u00e5": "å",
+    "u00e6": "æ",
+    "u00e7": "ç",
+    "u00e8": "è",
+    "u00e9": "é",
+    "u00ea": "ê",
+    "u00eb": "ë",
+    "u00ec": "ì",
+    "u00ed": "í",
+    "u00ee": "î",
+    "u00ef": "ï",
+    "u00f0": "ð",
+    "u00f1": "ñ",
+    "u00f2": "ò",
+    "u00f3": "ó",
+    "u00f4": "ô",
+    "u00f5": "õ",
+    "u00f6": "ö",
+    "u00f8": "ø",
+    "u00f9": "ù",
+    "u00fa": "ú",
+    "u00fb": "û",
+    "u00fc": "ü",
+    "u00fd": "ý",
+    "u00ff": "ÿ",
     "&#x27;": "'",
 }
 
+def resolve_special_chars(location):
+    matches = re.findall("(u00[\w+]{2}|&#x27;)", location)
+    if matches != []:
+        for special_char in matches:
+            location = location.replace(special_char,
+                                        special_chars.get(special_char, ""))
+    return location
 
 def launch_browser(option):
     if not option:
@@ -143,17 +148,6 @@ def login(account, password):
         return True
     except:
         return False
-
-
-def resolve_special_chars(location):
-    # catch special chars
-    matches = re.findall("(\\\\u00[\w+]{2}|&#x27;)", location)
-    if matches != []:
-        for special_char in matches:
-            location = location.replace(special_char,
-                                        special_chars.get(special_char, ""))
-    return location
-
 
 def scrolls(
     publications,
@@ -186,145 +180,135 @@ def fetch_urls(number_publications):
 
 
 def parse_location_timestamp(content):
-    # example "{\"street_address\": \"57 Rue des Batignolles\", \"zip_code\": \"75017\", \"city_name\": \"Paris, France\", \"region_name\": \"\", \"country_code\": \"FR\"
-    # "location":{"id":"235793184","has_public_page":true,"name":"Square de la tour Saint-Jacques","slug":"square-de-la-tour-saint-jacques","address_json":"{\"street_address\": \"\", \"zip_code\": \"\", \"city_name\": \"Paris, France\", \"region_name\": \"\", \"country_code\": \"FR\"
-    location = []
     try:
-        address = (re.search(
-            r"[\\]{0,1}/explore[\\]{0,1}/locations[\\]{0,1}/[0-9]+[\\]{0,1}/([^/]+)[\\]{0,1}/",
-            content).group(1).replace("-", " "))
-        address = resolve_special_chars(address)
-    except:
-        address = "Error"
-
-    try:
-        city = (re.search('"addressLocality":"([^"]+)"',
-                          content)[0].split(":")[1].split(",")[0].replace(
-                              '"', ""))
-        # city = re.search('"city_name":"([^"]+)"', content)[0].split(":")[1].split(",")[0].replace("\"", "")
-        city = resolve_special_chars(city)
+        location = dict(
+            resolve_special_chars(x).split(':')
+            for x in re.search(r"location\":{(.*)(?=, \\\"exact_city_match)",
+                               content).group(1).replace("\\", "").
+            replace("\"", "").replace("address_json:{", "").split(",")
+            if len(x.split(':')) > 1)
 
     except:
-        city = "Error"
-
-    try:
-        countrycode = (re.search('Country","name":"([^"]+)"',
-                                 content)[0].split(":")[1].replace('"', ""))
-        countrycode = resolve_special_chars(countrycode)
-    except:
-        countrycode = "Error"
-
-    location.extend([address, city, countrycode])
-
-    if location != ["Error", "Error", "Error"]:
-        tmp_timestamp = re.search('"uploadDate":"([^"]+)"',
-                                  content)[0].split("T")[0]
-        return [location, re.sub("[^0-9\-]", "", tmp_timestamp)]
+        location = "Error"
+    if location != "Error":
+        if logged_in:
+            return [
+                location,
+                re.search('datetime="([^"]+)', content).group(1).split("T")[0]
+            ]
+        else:
+            location.pop("has_public_page", None)  
+            return [
+                location,
+                re.search('"uploadDate":"([^"]+)"',
+                          content).group(1).split("T")[0]
+            ]
     else:
         return None
 
 
-def fetch_locations_and_timestamps(links, logged_in):
+def fetch_locations_and_timestamps_not_logged(links):
+    links_locations_timestamps = []
+    count = 0
 
-    if logged_in:
-        sys.stdout.write("\033[K")
-        max_wrk = 50
+    sys.stdout.write("\033[K")
+    max_wrk = 50
+    print(
+        "Fetching Locations and Timestamps on each picture ... " +
+        str(len(links)) + " links processed asynchronously by a pool of " +
+        str(max_wrk),
+        end="\r",
+    )
+    executor = ThreadPoolExecutor(
+        max_workers=max_wrk
+    )  # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
+    loop = asyncio.get_event_loop()
+
+    async def make_requests():
+        futures = [
+            loop.run_in_executor(executor, requests.get,
+                                 "https://www.instagram.com/p/" + url)
+            for url in links
+        ]
+        await asyncio.wait(futures)
+        return futures
+
+    futures = loop.run_until_complete(make_requests())
+    number_locs = len(futures)
+
+    for i in range(0, number_locs):
+        content = futures[i].result().text
+        location_timestamp = parse_location_timestamp(content)
+        if location_timestamp != None:
+            count += 1
+            links_locations_timestamps.append([
+                "https://www.instagram.com/p/" + links[i],
+                location_timestamp[0],
+                location_timestamp[1],
+            ])
+
         print(
-            "Fetching Locations and Timestamps on each picture ... " +
-            str(len(links)) + " links processed asynchronously by a pool of " +
-            str(max_wrk),
+            "Parsing location data ... " + str(i) + "/" + str(number_locs) +
+            " links processed... " + " Found location data on " + str(count) +
+            " links",
             end="\r",
         )
-        executor = ThreadPoolExecutor(
-            max_workers=max_wrk
-        )  # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
-        loop = asyncio.get_event_loop()
+    return links_locations_timestamps
 
-        async def make_requests():
-            futures = [
-                loop.run_in_executor(executor, requests.get,
-                                     "https://www.instagram.com/p/" + url)
-                for url in links
-            ]
-            await asyncio.wait(futures)
-            return futures
 
-        links_locations_timestamps = []
-        futures = loop.run_until_complete(make_requests())
-        number_locs = len(futures)
-        count = 0
+def fetch_locations_and_timestamps_logged(links):
+    links_locations_timestamps = []
+    count = 1
+    sys.stdout.write("\033[K")
+    for link in links:  # iterate over the links, collect location and timestamps if a location is available on the Instagram post
+        print("Checking Locations on each picture : Picture " + str(count) +
+              " out of " + str(len(links)) + " - " +
+              str(len(links_locations_timestamps)) + " Locations collected",
+              end="\r")
+        browser.get('https://www.instagram.com/p/' + link)
+        location_timestamp = parse_location_timestamp(browser.page_source)
+        if location_timestamp != None:
+            count += 1
+            links_locations_timestamps.append([
+                "https://www.instagram.com/p/" + link,
+                location_timestamp[0],
+                location_timestamp[1],
+            ])
+    return links_locations_timestamps
 
-        for i in range(0, number_locs):
-            content = futures[i].result().text
-            location_timestamp = parse_location_timestamp(content)
-            if location_timestamp != None:
-                count += 1
-                links_locations_timestamps.append([
-                    "https://www.instagram.com/p/" + links[i],
-                    location_timestamp[0],
-                    location_timestamp[1],
-                ])
 
-            print(
-                "Parsing location data ... " + str(i) + "/" +
-                str(number_locs) + " links processed... " +
-                " Found location data on " + str(count) + " links",
-                end="\r",
-            )
-        return links_locations_timestamps
+def geocode(location_dict):
+    query = "https://nominatim.openstreetmap.org/search"
 
+    if location_dict.get(' city_name') != " ":
+        query += "?city=" + location_dict.get(' city_name')[1:] + "&"
     else:
-        sys.stdout.write("\033[K")
-        links_locations_and_timestamps = []
-        counter = 1
-        for link in links:  # iterate over the links, collect location and timestamps if a location is available on the Instagram post
-            print("Checking Locations on each picture : Picture " +
-                  str(counter) + " out of " + str(len(links)) + " - " +
-                  str(len(links_locations_and_timestamps)) +
-                  " Locations collected",
-                  end="\r")
-            browser.get('https://www.instagram.com/p/' + link)
-            print(browser.page_source)
-            location_timestamp = parse_location_timestamp(browser.page_source)
-            if location_timestamp != None:
-                counter += 1
-                links_locations_timestamps.append([
-                    "https://www.instagram.com/p/" + link,
-                    location_timestamp[0],
-                    location_timestamp[1],
-                ])
-            counter += 1
-        return links_locations_and_timestamps
-
-
-def geocode(location):
-    query = "https://nominatim.openstreetmap.org/search?"
-    if location[0] != "Error":
-        query += "q=" + resolve_special_chars(location[0]) + "&"
-    if location[1] != "Error":
-        query += "city=" + location[1] + "&"
-    if location[2] != "Error":
-        query += "countrycodes=" + location[2] + "&"
-    return requests.get(query + "&format=json&limit=1").json()[0]
+        query += "?q=" + location_dict.get("name").replace("-", " ") + "&" # second try?
+        if location_dict.get('street_address') != " ":
+            query += "?street=" + location_dict.get('street_address') + "&"
+    if location_dict.get(' country_code') != " ":  #ISO 3166-1alpha2 code
+        query += "countrycodes=" + location_dict.get(' country_code')[1:] + "&"
+    # if location_dict.get(" zip_code") != "":
+    #     query += "postalcode=" + str(location_dict(" zip_code")) + "&"
+    return requests.get(query + "&format=json&limit=1").json()
 
 
 def geocode_all(links_locations_and_timestamps):
     sys.stdout.write("\033[K")
     errors = 0
-    count = 1
+    cnt = 1
     gps_coordinates = []
 
     for location in links_locations_and_timestamps:
         print(
             "Fetching GPS Coordinates ... : Processing location number " +
-            str(count) + " out of " +
-            str(len(links_locations_and_timestamps)) + " - Number of errors:" +
-            str(errors),
+            str(cnt) + " out of " + str(len(links_locations_and_timestamps)) +
+            " - Number of errors:" + str(errors),
             end="\r",
         )
         try:
             tmp_geoloc = geocode(location[1])
-            gps_coordinates.append([tmp_geoloc["lat"], tmp_geoloc["lon"]])
+            gps_coordinates.append([tmp_geoloc[0]["lat"], tmp_geoloc[0]["lon"]])
         except:
             print("An exception occurred for: " + str(location[1]))
             errors += 1
@@ -332,7 +316,7 @@ def geocode_all(links_locations_and_timestamps):
         time.sleep(
             1
         )  # Respect Nominatim's Usage Policy! (1 request per sec max) https://operations.osmfoundation.org/policies/nominatim/
-        count += 1
+        cnt += 1
 
     sys.stdout.write("\033[K")
 
@@ -425,9 +409,16 @@ number_publications = re.search("([0-9]+)</span> publications",
 links = fetch_urls(number_publications)
 if logged_in:
     browser.quit()
-links_locations_and_timestamps = fetch_locations_and_timestamps(
-    links, logged_in)
+    links_locations_and_timestamps = fetch_locations_and_timestamps_logged(
+        links)
+else:
+    links_locations_and_timestamps = fetch_locations_and_timestamps_not_logged(
+        links)
+
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 
 numbers = export_data(links_locations_and_timestamps, gps_coordinates)
 map_locations()
+
+## iso conversion
+## less locs ??? 128
