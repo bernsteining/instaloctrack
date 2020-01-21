@@ -15,26 +15,6 @@ I doesn't use Instagram's API since Instagram deprecated its location functional
 sudo apt install chromium-chromedriver &&
 sudo pip install -r requirements
 
-
-
-## How it works
-
-First, we retrieve all the pictures links of the account by scrolling the whole Instagram profile, thanks to selenium's webdriver.
-
-Then, we retrieve asynchronously (asyncio) each picture link, we check if it contains a location in the picture description, and retrieve the location's data if there's one, and the timestamp.
-
-* **NB:** Since 2018 Instagram deprecated its location API and it's not possible anymore to get the GPS coordinates of a picture, all we can retrieve is the name of the location. (If you can prove me that I'm wrong about this, please tell me!)
-
-Because Instagram doesn't provide GPS coordinates, and we're only given names of places, we have to geocode these (.ie. get the GPS coords from the name's place).
-
-For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usage, no API key is required, and we respect [Nominatim's usage Policy](https://operations.osmfoundation.org/policies/nominatim/) by requesting GPS coordinatess once every second.
-
-Eventually, once we have all the GPS coordinatess, we generate a HTML page with Javascript embedded that plots a Google Map with all our locations pinned. Once again, no API key is required for this step.
-For this final step, I have to thank [Tania Rascia's project](https://www.taniarascia.com/google-maps-apis-for-multiple-locations/) which provides such a feature.
-
-Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used, so are errors encountered.
-
-
 ## Usage
 
     python3 InstaLocTrack.py -h
@@ -53,6 +33,23 @@ Also, the data collected by the script (location names, timestamps, GPS coordina
                             Password of the Instagram profile to connect to
       -v, --visual          Spawns Chromium GUI, otherwise Chromium is headless
 
+
+## How it works
+
+First, we retrieve all the pictures links of the account by scrolling the whole Instagram profile, thanks to selenium's webdriver.
+
+Then, we retrieve asynchronously (asyncio) each picture link, we check if it contains a location in the picture description, and retrieve the location's data if there's one, and the timestamp.
+
+* **NB:** Since 2018 Instagram deprecated its location API and it's not possible anymore to get the GPS coordinates of a picture, all we can retrieve is the name of the location. (If you can prove me that I'm wrong about this, please tell me!)
+
+Because Instagram doesn't provide GPS coordinates, and we're only given names of places, we have to geocode these (.ie. get the GPS coords from the name's place).
+
+For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usage, no API key is required, and we respect [Nominatim's usage Policy](https://operations.osmfoundation.org/policies/nominatim/) by requesting GPS coordinatess once every second.
+
+Eventually, once we have all the GPS coordinatess, we generate a HTML page with Javascript embedded that plots a Google Map with all our locations pinned. Once again, no API key is required for this step.
+For this final step, I have to thank [Tania Rascia's project](https://www.taniarascia.com/google-maps-apis-for-multiple-locations/) which provides such a feature.
+
+Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used, so are errors encountered.
 
 ## Example
 
