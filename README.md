@@ -67,14 +67,19 @@ Information available when clicking on a marker:
 
 The JSON data dump (just a part of it to show the format for a given location):
 
-    {
-    "link": "https://www.instagram.com/p/98Ul-yx9Rc",
-    "place": [
-      "arc de triomphe champs elysees paris",
-      "Paris",
-      "FR"
-    ],
-    "timestamp": "2015-11-11",
+{
+    "link": "https://www.instagram.com/p/-Q_9EvR9eu",
+    "place": {
+      "id": "290297",
+      "name": "Musée du quai Branly - Jacques Chirac",
+      "slug": "musee-du-quai-branly-jacques-chirac",
+      "street_address": " 37 quai Branly",
+      " zip_code": " 75007",
+      " city_name": " Paris",
+      " region_name": " ",
+      " country_code": " FR"
+    },
+    "timestamp": "2015-11-19",
     "gps": {
       "lat": "48.8566969",
       "lon": "2.3514616"
@@ -88,9 +93,8 @@ The JSON data dump (just a part of it to show the format for a given location):
 
 * Cleaner code :D
 * Use OOP programming rather than lists and indexes
-* User login feature to scan private profiles you're legitimately subscribed to [WIP]
+* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\_(ツ)_/¯
 * Asynchronous Webdriver : arsenic ?
-* Better scraping of the geo data available ... more fields
 * key-values for every field of the JSON
 * best way to provide fast results : requests asynchronously?
 * Provide statistics about the location data (most visited place, heatmap, diagrams ...)
