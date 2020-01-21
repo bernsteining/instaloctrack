@@ -67,24 +67,24 @@ Information available when clicking on a marker:
 
 The JSON data dump (just a part of it to show the format for a given location):
 
-{
-    "link": "https://www.instagram.com/p/-Q_9EvR9eu",
-    "place": {
-      "id": "290297",
-      "name": "Musée du quai Branly - Jacques Chirac",
-      "slug": "musee-du-quai-branly-jacques-chirac",
-      "street_address": " 37 quai Branly",
-      " zip_code": " 75007",
-      " city_name": " Paris",
-      " region_name": " ",
-      " country_code": " FR"
-    },
-    "timestamp": "2015-11-19",
-    "gps": {
-      "lat": "48.8566969",
-      "lon": "2.3514616"
-    }
-  }
+    {
+        "link": "https://www.instagram.com/p/-Q_9EvR9eu",
+        "place": {
+          "id": "290297",
+          "name": "Musée du quai Branly - Jacques Chirac",
+          "slug": "musee-du-quai-branly-jacques-chirac",
+          "street_address": " 37 quai Branly",
+          " zip_code": " 75007",
+          " city_name": " Paris",
+          " region_name": " ",
+          " country_code": " FR"
+        },
+        "timestamp": "2015-11-19",
+        "gps": {
+          "lat": "48.8566969",
+          "lon": "2.3514616"
+        }
+      }
 
 
 
