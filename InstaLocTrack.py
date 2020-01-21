@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 import time
 import re
 import json
@@ -9,6 +10,8 @@ import os
 import asyncio
 import jinja2
 import argparse
+from arsenic import get_session
+from arsenic.browsers import Chrome
 from concurrent.futures import ThreadPoolExecutor
 
 parser = argparse.ArgumentParser(
@@ -42,22 +45,10 @@ parser.add_argument(
     "-v",
     "--visual",
     action='store_true',
-    dest="visual",
     help="Spawns Chromium GUI, otherwise Chromium is headless",
 )
 
 args = parser.parse_args()
-
-
-def launch_browser(option):
-    if option is None:
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        return webdriver.Chrome("/usr/bin/chromedriver",
-                                chrome_options=chrome_options)
-    else:
-        return webdriver.Chrome("/usr/bin/chromedriver")
-
 
 special_chars = {
     "\\u00c0": "À",
@@ -121,6 +112,16 @@ special_chars = {
     "\\u00ff": "ÿ",
     "&#x27;": "'",
 }
+
+
+def launch_browser(option):
+    if not option:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        return webdriver.Chrome("/usr/bin/chromedriver",
+                                chrome_options=chrome_options)
+    else:
+        return webdriver.Chrome("/usr/bin/chromedriver")
 
 
 def login(account, password):
@@ -228,7 +229,7 @@ def fetch_locations_and_timestamps(links):
 
     async def make_requests():
         futures = [
-            loop.run_in_executor(executor, requests.get,
+            loop.run_in_executor(executor, browser.get,
                                  "https://www.instagram.com/p/" + url)
             for url in links
         ]
@@ -384,7 +385,6 @@ number_publications = re.search("([0-9]+)</span> publications",
                                 browser.page_source).group(1)
 
 links = fetch_urls(number_publications)
-browser.quit()
 links_locations_and_timestamps = fetch_locations_and_timestamps(links)
 gps_coordinates = geocode_all(links_locations_and_timestamps)
 
