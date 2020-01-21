@@ -74,6 +74,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Use OOP programming rather than lists and indexes
 * User login feature to scan private profiles you're legitimately subscribed to [WIP]
+* best way to provide fast results : requests asynchronously?
 * Provide statistics about the location data (most visited place, heatmap, diagrams ...)
 * Better Geocoding :
 	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
