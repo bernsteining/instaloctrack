@@ -55,8 +55,6 @@ Also, the data collected by the script (location names, timestamps, GPS coordina
 
 As an example, here's the output on the former French President's Instagram profile, [@fhollande](https://www.instagram.com/fhollande/?hl=fr) :
 
-As you can see, some locations aren't accurate enough to geocode them. The script handles this errors, and alerts the user about them on the console, and dumps a json or the errors.
-
 **The map**:
 ![Map of @fhollande's locations on Instagram](https://imgur.com/FRaa2zO.png
 )
