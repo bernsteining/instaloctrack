@@ -92,7 +92,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Use OOP programming rather than lists and indexes
 * Check password correctness with -p flag
-* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\_(ツ)_/¯
+* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\\_(ツ)_/¯
 * Asynchronous Webdriver : arsenic ?
 * key-values for every field of the JSON
 * best way to provide fast results : requests asynchronously?
