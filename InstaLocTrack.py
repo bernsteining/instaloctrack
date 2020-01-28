@@ -214,7 +214,6 @@ def parse_location_timestamp(content):
 def fetch_locations_and_timestamps_not_logged(links):
     links_locations_timestamps = []
     count = 0
-
     sys.stdout.write("\033[K")
     max_wrk = 50
     print(
