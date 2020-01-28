@@ -3,8 +3,6 @@
 
 A SOCMINT project I made this week for an OSINT course I had.
 
-TL;DR : Here's a video of the script being launched : [https://www.youtube.com/watch?v=BKlTnBWupr0](https://www.youtube.com/watch?v=BKlTnBWupr0) (previous version tho !)
-
 ## Goal of the project
 The goal of this project is to collect all the locations linked to the photos of an Instagram profile in order to place them on a map.
 
