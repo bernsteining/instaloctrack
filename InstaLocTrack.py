@@ -282,21 +282,20 @@ def fetch_locations_and_timestamps_logged(links):
 
 
 def geocode(location_dict):
-    query = "https://nominatim.openstreetmap.org/search?"
+    query = "https://nominatim.openstreetmap.org/search"
 
+    if location_dict.get(' city_name') != " ":
+        query += "?city=" + location_dict.get(' city_name')[1:] + "&"
+    else:
+        query += "?q=" + location_dict.get("name").replace(
+            "-", " ") + "&"  # second try?
+        if location_dict.get('street_address') != " ":
+            query += "?street=" + location_dict.get('street_address') + "&"
     if location_dict.get(' country_code') != " ":  #ISO 3166-1alpha2 code
         query += "countrycodes=" + location_dict.get(' country_code')[1:] + "&"
-    if location_dict.get(' city_name') != " ":
-        query += "city=" + str(location_dict.get(' city_name')[1:]) + "&"
-    # if location_dict.get(' zip_code') != " ":
-    #     query += "postalcode=" + str(location_dict(' zip_code'))[1:] + "&"
-    # if location_dict.get('street_address') != " ":
-    #     query += "street=" + str(location_dict.get('street_address')) + "&"
-    # if location_dict.get('name') != " ":
-    #     query += "q=" + str(location_dict.get('name').replace(
-    #         "-", " ")) + "&"  # second try?
-    print(query)
-    return requests.get(query + "format=json&limit=1").json()
+    # if location_dict.get(" zip_code") != "":
+    #     query += "postalcode=" + str(location_dict(" zip_code")) + "&"
+    return requests.get(query + "&format=json&limit=1").json()
 
 
 def geocode_all(links_locations_and_timestamps):
@@ -317,8 +316,7 @@ def geocode_all(links_locations_and_timestamps):
             gps_coordinates.append(
                 [tmp_geoloc[0]["lat"], tmp_geoloc[0]["lon"]])
         except:
-            print(str(location[1]))
-            #print("An exception occurred for: " + str(location[1]))
+            print("An exception occurred for: " + str(location[1]))
             errors += 1
             gps_coordinates.append("Error")
         time.sleep(
