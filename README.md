@@ -61,7 +61,7 @@ As an example, here's the output on the former French President's Instagram prof
 
 Information available when clicking on a marker:
 
-![JSON data on map marker](https://i.imgur.com/Wa3FRq2.png)
+![JSON data on map marker](https://i.imgur.com/MBxbMsS.png)
 
 The JSON data dump (just a part of it to show the format for a given location):
 
