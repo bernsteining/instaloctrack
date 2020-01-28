@@ -56,7 +56,7 @@ Also, the data collected by the script (location names, timestamps, GPS coordina
 As an example, here's the output on the former French President's Instagram profile, [@fhollande](https://www.instagram.com/fhollande/?hl=fr) :
 
 **The map**:
-![Map of @fhollande's locations on Instagram](https://imgur.com/FRaa2zO.png
+![Map of @fhollande's locations on Instagram](https://i.imgur.com/vzLPy1A.png
 )
 
 Information available when clicking on a marker:
