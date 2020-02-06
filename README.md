@@ -95,11 +95,12 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Provide statistics about the location data (most visited place, heatmap, diagrams ...)
 * Interactive dashboard instead of static html/JS output
 * Better Geocoding :
-	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings 
+	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings, maybe use this just to correct the errors
 	* Retry Geocoding when it fails because of the first field: happens when it's too precise, then the location of the city rather than the exact place would be better than just an error imo.
 	* Use other geocoding tools (e.g. https://geo.api.gouv.fr/adresse) than Nominatim when it fails? (specify arg?)
+	* Use [geopy](https://pypi.org/project/geopy/)
 * Add an argument to select only a set of pictures (selected by date, or rank)
 * Use GeoJSON WGS-84 (EPSG 4326) format
 * Time information about the duration of the script
 * The whole Instagram profile isn't scrolled if your connection is slow ... maybe gonna add a parameter to correct this
-
+* Use Leaflet instead of Google Maps
