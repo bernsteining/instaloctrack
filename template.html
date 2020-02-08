@@ -1,12 +1,45 @@
+<!DOCTYPE html>
 <html>
 
 <head>
 
-  <title>Google Maps Multiple Markers</title>
-  <script src="http://maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
+  <title>InstaLocTrack Results</title>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+  <script src="../../leaflet-heat.js"></script>
+
+
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #map {
+      width: 600px;
+      height: 400px;
+    }
+
+    #heatmap {
+      width: 600px;
+      height: 400px;
+    }
+  </style>
+
+
 </head>
 
 <body>
+
   <ul style="list-style-type:square;">
     <li>Instagram profile: <a href=https://www.instagram.com/{{target_account}}>@{{target_account}} </a> </li>
         <li>Number of
@@ -16,47 +49,83 @@
     <li>Number of errors: {{errors_number}}</li>
   </ul>
   <div id="infos"> </div>
+  Map
   <div id="map" style="height: 400px; width: 500px;">
   </div>
-  <script type="text/javascript">
+  Heatmap
+  <div id='heatmap'></div>
+
+  <script>
+
     var links = {{ links }};
     var places = {{ places }};
     var timestamps = {{ timestamps }};
     var locations = {{ locations }};
+    var map = L.map('map').setView([51.5, -0.09], 1);
 
-    var map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 1,
-      center: new google.maps.LatLng(48.866667, 2.333333),
-      mapTypeId: google.maps.MapTypeId.ROADMAP
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var Icon = L.Icon.extend({
+      options: {
+        shadowUrl: 'leaf-shadow.png',
+        iconSize: [16, 16],
+        shadowSize: [50, 64],
+        iconAnchor: [22, 94],
+        shadowAnchor: [4, 62],
+        popupAnchor: [-3, -76]
+      }
     });
 
-    var infowindow = new google.maps.InfoWindow();
-
-    var marker, i;
-
     for (i = 0; i < locations.length; i++) {
-      marker = new google.maps.Marker({
-        position: new google.maps.LatLng(locations[i][0], locations[i][1]),
-        map: map,
-        icon: '../../insta_logo.png',
-      });
 
-      google.maps.event.addListener(marker, 'click', (function (marker, i) {
-        return function () {
+      html = '<ul style="list-style-type:square;">'
+      html += '<li>Picture link: <a href=' + links[i] + '>Link</a></li>'
+      html += '<li>Place name: ' + places[i]['name'] + places[i][' city_name'] + "," + places[i][' zip_code'] + places[i][' country_code'] + '</li>'
+      html += '<li>Timestamp: ' + timestamps[i] + '</li>'
+      html += '<li>Lattitude: ' + locations[i][0] + '</li>'
+      html += '<li>Longitude: ' + locations[i][1] + '</li>'
+      html += '</ul>'
 
-          html = '<ul style="list-style-type:square;">'
-          html += '<li>Picture link: <a href=' + links[i] + '>Link</a></li>'
-          html += '<li>Place name: ' + places[i]['name'] + places[i][' city_name'] + "," + places[i][' zip_code'] + places[i][' country_code'] + '</li>'
-          html += '<li>Timestamp: ' + timestamps[i] + '</li>'
-          html += '<li>Lattitude: ' + locations[i][0] + '</li>'
-          html += '<li>Longitude: ' + locations[i][1] + '</li>'
-          html += '</ul>'
-          infowindow.setContent(html);
-          infowindow.open(map, marker);
-        }
-      })(marker, i));
+
+      if (locations[i] != 'Error') {
+        L.marker([locations[i][0], locations[i][1]], new Icon({})).bindPopup(html
+        ).addTo(map);
+      }
     }
+
+    var heatmap = L.map('heatmap').setView([51.5, -0.09], 1);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(heatmap);
+
+
+
+    function is_correct(value) {
+      return value != 'Error'
+    }
+
+    no_errors_loc = locations.filter(is_correct);
+
+    var heat1 = L.heatLayer(no_errors_loc, {
+      radius: 20, // default value
+      blur: 10, // default value
+      max: 0.1,
+      minOpacity: 0.7,
+      gradient: {
+        0.0: 'green',
+        0.2: 'yellow',
+        1.0: 'red'
+      }, // Values can be set for a scale of 0-1
+    }).addTo(heatmap);
+
+
   </script>
+
+
+
 </body>
 
 </html>
