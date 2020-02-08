@@ -1,8 +1,6 @@
 
 # Insta LocTrack
 
-A SOCMINT project I made this week for an OSINT course I had.
-
 ## Goal of the project
 The goal of this project is to collect all the locations linked to the photos of an Instagram profile in order to place them on a map.
 
@@ -44,21 +42,22 @@ Because Instagram doesn't provide GPS coordinates, and we're only given names of
 
 For this, I used Nominatim's awesome API, which uses OpenStreetMap. For our usage, no API key is required, and we respect [Nominatim's usage Policy](https://operations.osmfoundation.org/policies/nominatim/) by requesting GPS coordinatess once every second.
 
-Eventually, once we have all the GPS coordinatess, we generate a HTML page with Javascript embedded that plots a Google Map with all our locations pinned. Once again, no API key is required for this step.
-For this final step, I have to thank [Tania Rascia's project](https://www.taniarascia.com/google-maps-apis-for-multiple-locations/) which provides such a feature.
+Eventually, once we have all the GPS coordinatess, we generate a HTML (thanks to jinja2 templating) with Javascript embedded that plots an Open Street Map (thanks to [Leaflet](https://github.com/Leaflet/Leaflet) library) with all our locations pinned. Once again, no API key is required for this step.
 
-Also, the data collected by the script (location names, timestamps, GPS coordinates) are dumped to a JSON file in order to be re-used, so are errors encountered.
+Also, the data collected by the script (location names, timestamps, GPS coordinates, errors) are dumped to a JSON file in order to be re-used.
 
 ## Example
 
 As an example, here's the output on the former French President's Instagram profile, [@fhollande](https://www.instagram.com/fhollande/?hl=fr) :
 
-![Map of @fhollande's locations on Instagram](https://i.imgur.com/vzLPy1A.png
+![Map of @fhollande's locations on Instagram](https://i.imgur.com/5CwGElj.png
 )
+
+![Heatmap of @fhollande's locations on Instagram](https://i.imgur.com/vS4tZa1.png)
 
 Information available when clicking on a marker:
 
-![JSON data on map marker](https://i.imgur.com/MBxbMsS.png)
+![available data when clicking on a marker](https://imgur.com/QBIofFs.png)
 
 The JSON data dump (just a part of it to show the format for a given location):
 
@@ -89,10 +88,11 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Cleaner code :D
 * Use OOP programming rather than lists and indexes
 * Check password correctness with -p flag
+* Debug the geoloc scraper counter during the runtime (parsing function should return None sometimes but it doesn't)
 * Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\\_(ツ)_/¯
 * Asynchronous Webdriver : arsenic ?
 * best way to provide fast results : requests asynchronously?
-* Provide statistics about the location data (most visited place, heatmap, diagrams ...)
+* Provide statistics about the location data (most visited place, diagrams ...)
 * Interactive dashboard instead of static html/JS output
 * Better Geocoding :
 	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings, maybe use this just to correct the errors
@@ -103,4 +103,3 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Use GeoJSON WGS-84 (EPSG 4326) format
 * Time information about the duration of the script
 * The whole Instagram profile isn't scrolled if your connection is slow ... maybe gonna add a parameter to correct this
-* Use Leaflet instead of Google Maps
