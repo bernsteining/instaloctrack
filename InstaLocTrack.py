@@ -264,6 +264,7 @@ def fetch_locations_and_timestamps_logged(links):
     count = 1
     sys.stdout.write("\033[K")
     for link in links:  # iterate over the links, collect location and timestamps if a location is available on the Instagram post
+        count += 1
         print("Checking Locations on each picture : Picture " + str(count) +
               " out of " + str(len(links)) + " - " +
               str(len(links_locations_timestamps)) + " Locations collected",
@@ -271,7 +272,6 @@ def fetch_locations_and_timestamps_logged(links):
         browser.get('https://www.instagram.com/p/' + link)
         location_timestamp = parse_location_timestamp(browser.page_source)
         if location_timestamp != None:
-            count += 1
             links_locations_timestamps.append([
                 "https://www.instagram.com/p/" + link,
                 location_timestamp[0],
