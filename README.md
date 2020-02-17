@@ -86,6 +86,7 @@ The JSON data dump (just a part of it to show the format for a given location):
 ## Possible Improvements
 
 * Cleaner code :D
+* Use a logger instead of printing 
 * Use OOP programming rather than lists and indexes
 * Check password correctness with -p flag
 * Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\\_(ツ)_/¯
