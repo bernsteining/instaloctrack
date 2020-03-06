@@ -11,6 +11,14 @@ I doesn't use Instagram's API since Instagram deprecated its location functional
 sudo apt install chromium-chromedriver &&
 sudo pip install -r requirements
 
+## installation
+
+```
+git clone https://github.com/bernsteining/InstaLocTrack
+cd InstaLocTrack
+pip3 install .
+```
+
 ## Usage
 
     python3 InstaLocTrack.py -h
