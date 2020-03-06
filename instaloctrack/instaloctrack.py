@@ -12,44 +12,49 @@ import jinja2
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 
-parser = argparse.ArgumentParser(
-    description=
-    "Instagram location data gathering tool.  Usage: python3 InstaLocTrack.py -t <target_account>",
-    prog="InstaLocTrack")
 
-parser.add_argument(
-    "-t",
-    "--target",
-    dest="target_account",
-    help="Instagram profile to investigate",
-)
+def parse_args():
+    """Parse console arguments"""
+    parser = argparse.ArgumentParser(
+        description=
+        "Instagram location data gathering tool.  Usage: python3 InstaLocTrack.py -t <target_account>",
+        prog="InstaLocTrack")
 
-parser.add_argument(
-    "-l",
-    "--login",
-    dest="login",
-    help=
-    "Instagram profile to connect to, in order to access the instagram posts of the target account",
-)
+    parser.add_argument(
+        "-t",
+        "--target",
+        dest="target_account",
+        help="Instagram profile to investigate",
+        required=True,
+    )
 
-parser.add_argument(
-    "-p",
-    "--password",
-    dest="password",
-    help="Password of the Instagram profile to connect to",
-)
+    parser.add_argument(
+        "-l",
+        "--login",
+        dest="login",
+        help=
+        "Instagram profile to connect to, in order to access the instagram posts of the target account",
+    )
 
-parser.add_argument(
-    "-v",
-    "--visual",
-    action='store_true',
-    help="Spawns Chromium GUI, otherwise Chromium is headless",
-)
+    parser.add_argument(
+        "-p",
+        "--password",
+        dest="password",
+        help="Password of the Instagram profile to connect to",
+    )
 
-args = parser.parse_args()
+    parser.add_argument(
+        "-v",
+        "--visual",
+        action='store_true',
+        help="Spawns Chromium GUI, otherwise Chromium is headless",
+    )
+
+    return parser.parse_args()
 
 
 def resolve_special_chars(location):
+    """Handle special characters that aren't correctly encoded"""
     matches = re.findall("(u0[\w+]{3}|&#x27;)", location)
     if matches != []:
         for special_char in matches:
@@ -64,6 +69,7 @@ def resolve_special_chars(location):
 
 
 def launch_browser(option):
+    """Launch the ChromeDriver with specific options"""
     if not option:
         chrome_options = Options()
         chrome_options.add_argument("--headless")
@@ -73,7 +79,8 @@ def launch_browser(option):
         return webdriver.Chrome("/usr/bin/chromedriver")
 
 
-def login(account, password):
+def login(args, browser, account, password):
+    """Login to the Instagram account"""
     try:
         print(
             "Logging in with " + account + "'s Instagram account ...",
@@ -94,14 +101,13 @@ def login(account, password):
         return False
 
 
-def scrolls(
-    publications,
-):  # scrolls required to snag all the data accordingly to the number of posts
+def scrolls(publications, ):
+    """Number of scrolls required to catch all the pictures links"""
     return (int(publications)) // 11
-    # return 1 #for testing purpose
 
 
-def fetch_urls(number_publications):
+def fetch_urls(browser, number_publications):
+    """Catch all the pictures links of the Instagram profile"""
     links = []
     links.extend(re.findall("/p/([^/]+)/", browser.page_source))
     n_scrolls = scrolls(number_publications)
@@ -124,7 +130,8 @@ def fetch_urls(number_publications):
     return list(dict.fromkeys(links))  # remove duplicates
 
 
-def parse_location_timestamp(content):
+def parse_location_timestamp(content, logged_in):
+    """Catch the location data and the timestamps in the page source"""
     try:
         location = dict(
             resolve_special_chars(x).split(':')
@@ -153,6 +160,7 @@ def parse_location_timestamp(content):
 
 
 def fetch_locations_and_timestamps_not_logged(links):
+    """Catch all locations and timestamps asynchronously on a profile"""
     links_locations_timestamps = []
     count = 0
     sys.stdout.write("\033[K")
@@ -182,7 +190,7 @@ def fetch_locations_and_timestamps_not_logged(links):
 
     for i in range(0, number_locs):
         content = futures[i].result().text
-        location_timestamp = parse_location_timestamp(content)
+        location_timestamp = parse_location_timestamp(content, False)
         if location_timestamp != None:
             count += 1
             links_locations_timestamps.append([
@@ -200,7 +208,8 @@ def fetch_locations_and_timestamps_not_logged(links):
     return links_locations_timestamps
 
 
-def fetch_locations_and_timestamps_logged(links):
+def fetch_locations_and_timestamps_logged(browser, links):
+    """Catch all locations and timestamps on a profile"""
     links_locations_timestamps = []
     count = 1
     sys.stdout.write("\033[K")
@@ -211,7 +220,8 @@ def fetch_locations_and_timestamps_logged(links):
               str(len(links_locations_timestamps)) + " Locations collected",
               end="\r")
         browser.get('https://www.instagram.com/p/' + link)
-        location_timestamp = parse_location_timestamp(browser.page_source)
+        location_timestamp = parse_location_timestamp(browser.page_source,
+                                                      True)
         if location_timestamp != None:
             links_locations_timestamps.append([
                 "https://www.instagram.com/p/" + link,
@@ -222,6 +232,7 @@ def fetch_locations_and_timestamps_logged(links):
 
 
 def geocode(location_dict):
+    """Get the GPS coordinates of a location"""
     query = "https://nominatim.openstreetmap.org/search"
 
     if location_dict.get(' city_name') != " ":
@@ -239,6 +250,7 @@ def geocode(location_dict):
 
 
 def geocode_all(links_locations_and_timestamps):
+    """Get the GPS coordinates of all the locations"""
     sys.stdout.write("\033[K")
     errors = 0
     cnt = 1
@@ -269,7 +281,8 @@ def geocode_all(links_locations_and_timestamps):
     return gps_coordinates
 
 
-def export_data(links_locations_and_timestamps, gps_coordinates):
+def export_data(args, links_locations_and_timestamps, gps_coordinates):
+    """Write to JSON all the data"""
 
     json_dump = []
     errors = []
@@ -312,7 +325,9 @@ def export_data(links_locations_and_timestamps, gps_coordinates):
     return len(json_dump), len(errors)
 
 
-def map_locations():
+def map_locations(args, number_publications, numbers,
+                  links_locations_and_timestamps, gps_coordinates):
+    """Pin all the locations on on an interactive map"""
     templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
     template = templateEnv.get_template("template.html")
@@ -338,28 +353,37 @@ def map_locations():
               "_instaloctrack_map.html")
 
 
-browser = launch_browser(args.visual)
+def main():
 
-logged_in = False
+    args = parse_args()
+    browser = launch_browser(args.visual)
 
-if args.login is not None and args.password is not None:
-    logged_in = login(args.login, args.password)
+    logged_in = False
 
-browser.get("https://www.instagram.com/" + args.target_account + "/?hl=fr")
+    if args.login is not None and args.password is not None:
+        logged_in = login(args, browser, args.login, args.password)
 
-number_publications = re.search("([0-9]+)</span> publications",
-                                browser.page_source).group(1)
+    browser.get("https://www.instagram.com/" + args.target_account + "/?hl=fr")
 
-links = fetch_urls(number_publications)
-if logged_in:
-    links_locations_and_timestamps = fetch_locations_and_timestamps_logged(
-        links)
-else:
-    browser.quit()
-    links_locations_and_timestamps = fetch_locations_and_timestamps_not_logged(
-        links)
+    number_publications = re.search("([0-9]+)</span> publications",
+                                    browser.page_source).group(1)
 
-gps_coordinates = geocode_all(links_locations_and_timestamps)
+    links = fetch_urls(browser, number_publications)
+    if logged_in:
+        links_locations_and_timestamps = fetch_locations_and_timestamps_logged(
+            browser, links)
+    else:
+        browser.quit()
+        links_locations_and_timestamps = fetch_locations_and_timestamps_not_logged(
+            links)
 
-numbers = export_data(links_locations_and_timestamps, gps_coordinates)
-map_locations()
+    gps_coordinates = geocode_all(links_locations_and_timestamps)
+
+    numbers = export_data(args, links_locations_and_timestamps,
+                          gps_coordinates)
+    map_locations(args, number_publications, numbers,
+                  links_locations_and_timestamps, gps_coordinates)
+
+
+if __name__ == "__main__":
+    main()
