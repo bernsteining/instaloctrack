@@ -95,11 +95,9 @@ The JSON data dump (just a part of it to show the format for a given location):
 
 * Cleaner code :D
 * Use a logger instead of printing 
-* Use OOP programming rather than lists and indexes
+* Use requests asynchronously even in the logged on use case
 * Check password correctness with -p flag
-* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO code as valid for some reason ¯\\_(ツ)_/¯
-* Asynchronous Webdriver : arsenic ?
-* best way to provide fast results : requests asynchronously?
+* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO  (or DOM TOM) code as valid for some reason ¯\\_(ツ)_/¯
 * Provide statistics about the location data (most visited place, diagrams ...)
 * Interactive dashboard instead of static html/JS output
 * Better Geocoding :
