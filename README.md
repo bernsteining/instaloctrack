@@ -21,7 +21,7 @@ pip3 install .
 
 ## Usage
 
-    python3 InstaLocTrack.py -h
+    instaloctrack -h
     usage: InstaLocTrack [-h] [-t TARGET_ACCOUNT] [-l LOGIN] [-p PASSWORD] [-v]
     
     Instagram location data gathering tool. Usage: python3 InstaLocTrack.py -t <target_account>
