@@ -1,4 +1,3 @@
-
 # Insta LocTrack
 
 ## Goal of the project
@@ -58,10 +57,10 @@ Also, the data collected by the script (location names, timestamps, GPS coordina
 
 As an example, here's the output on the former French President's Instagram profile, [@fhollande](https://www.instagram.com/fhollande/?hl=fr) :
 
-![Map of @fhollande's locations on Instagram](https://i.imgur.com/5CwGElj.png
-)
+![Map of @fhollande's locations on Instagram](https://i.imgur.com/LPulybM.png)
 
-![Heatmap of @fhollande's locations on Instagram](https://i.imgur.com/vS4tZa1.png)
+The Heatmap:
+![Heatmap of @fhollande's locations on Instagram](https://i.imgur.com/OBrTTdp.png)
 
 Information available when clicking on a marker:
 
@@ -95,7 +94,6 @@ The JSON data dump (just a part of it to show the format for a given location):
 
 * Cleaner code :D
 * Use a logger instead of printing 
-* Use requests asynchronously even in the logged on use case
 * Check password correctness with -p flag
 * Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO  (or DOM TOM) code as valid for some reason ¯\\_(ツ)_/¯
 * Provide statistics about the location data (most visited place, diagrams ...)
@@ -109,3 +107,4 @@ The JSON data dump (just a part of it to show the format for a given location):
 * Use GeoJSON WGS-84 (EPSG 4326) format
 * Time information about the duration of the script
 * The whole Instagram profile isn't scrolled if your connection is slow ... maybe gonna add a parameter to correct this
+
