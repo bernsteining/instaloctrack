@@ -93,12 +93,13 @@ The JSON data dump (just a part of it to show the format for a given location):
 ## Possible Improvements
 
 * Cleaner code :D
+* Use beautifulsoup instead of regex parsing
 * Use a logger instead of printing 
 * Check password correctness with -p flag
-* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO  (or DOM TOM) code as valid for some reason ¯\\_(ツ)_/¯
+* Correct ISO Code for some countries: Nominatim doesn't considers French Polynesia's ISO  (or DOM TOM) code as valid for some reason ¯\\_(ツ)_/¯ / Issue opened on osm-search
 * Provide statistics about the location data (most visited place, diagrams ...)
 * Interactive dashboard instead of static html/JS output
-* Better Geocoding :
+* Better Geocoding :ords from Instagra
 	* Get GPS coords from Instagram's location ID ... doesn't work asynchronously at the moment, gotta check for the timeout settings, maybe use this just to correct the errors
 	* Retry Geocoding when it fails because of the first field: happens when it's too precise, then the location of the city rather than the exact place would be better than just an error imo.
 	* Use other geocoding tools (e.g. https://geo.api.gouv.fr/adresse) than Nominatim when it fails? (specify arg?)

@@ -16,6 +16,11 @@
     crossorigin=""></script>
   <script src="../../leaflet-heat.js"></script>
 
+  <!-- Load c3.css -->
+  <link href="../../c3-0.7.15/c3.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="../../c3-0.7.15/c3.min.js"></script>
+
 
   <style>
     html,
@@ -54,6 +59,9 @@
   </div>
   Heatmap
   <div id='heatmap'></div>
+  Continents Stats
+  <div id='piechart'></div>
+  Countries Stats
 
   <script>
 
@@ -62,6 +70,8 @@
     var timestamps = {{ timestamps }};
     var locations = {{ locations }};
     var map = L.map('map').setView([51.5, -0.09], 1);
+    var countrycodes = {{ countrycodes }}
+    var continents = {{ continents }}
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -101,7 +111,18 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(heatmap);
 
-
+    var piechart = c3.generate({
+      bindto: '#piechart',
+      data: {
+        // iris data from R
+        columns:
+          continents,
+        type: 'pie',
+        onclick: function (d, i) { console.log("onclick", d, i); },
+        onmouseover: function (d, i) { console.log("onmouseover", d, i); },
+        onmouseout: function (d, i) { console.log("onmouseout", d, i); }
+      }
+    });
 
     function is_correct(value) {
       return value != 'Error'
@@ -112,12 +133,12 @@
     var heat1 = L.heatLayer(no_errors_loc, {
       radius: 20, // default value
       blur: 10, // default value
-      max: 0.1,
+      max: 1,
       minOpacity: 0.7,
       gradient: {
         0.0: 'green',
-        0.2: 'yellow',
-        1.0: 'red'
+        0.5: 'yellow',
+        1: 'red'
       }, // Values can be set for a scale of 0-1
     }).addTo(heatmap);
 

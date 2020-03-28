@@ -1,16 +1,17 @@
+import argparse
+import asyncio
+import json
+import os
+import re
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+import jinja2
+import pycountry_convert as pc
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-import time
-import re
-import json
-import requests
-import sys
-import os
-import asyncio
-import jinja2
-import argparse
-from concurrent.futures import ThreadPoolExecutor
 
 
 def parse_args():
@@ -51,6 +52,17 @@ def parse_args():
     )
 
     return parser.parse_args()
+
+
+def selenium_to_requests_session(browser):
+    selenium_cookies = browser.get_cookies()
+
+    requests_session = requests.Session()
+
+    for cookie in selenium_cookies:
+        requests_session.cookies.set(cookie.get("name"), cookie.get("value"))
+
+    return requests_session
 
 
 def resolve_special_chars(location):
@@ -130,7 +142,7 @@ def fetch_urls(browser, number_publications):
     return list(dict.fromkeys(links))  # remove duplicates
 
 
-def parse_location_timestamp(content, logged_in):
+def parse_location_timestamp(content):
     """Catch the location data and the timestamps in the page source"""
     try:
         location = dict(
@@ -143,27 +155,21 @@ def parse_location_timestamp(content, logged_in):
     except:
         location = "Error"
     if location != "Error":
-        if logged_in:
-            return [
-                location,
-                re.search('datetime="([^"]+)', content).group(1).split("T")[0]
-            ]
-        else:
-            location.pop("has_public_page", None)
-            return [
-                location,
-                re.search('"uploadDate":"([^"]+)"',
-                          content).group(1).split("T")[0]
-            ]
+        location.pop("has_public_page", None)
+        try:
+            datetime = re.search('"uploadDate":"([^"]+)"',
+                                 content).group(1).split("T")[0]
+        except:
+            datetime = "unknown"
+        return [location, datetime]
     else:
         return None
 
 
-def fetch_locations_and_timestamps_not_logged(links):
+def fetch_locations_and_timestamps(links, requests_session=None):
     """Catch all locations and timestamps asynchronously on a profile"""
     links_locations_timestamps = []
     count = 0
-    sys.stdout.write("\033[K")
     max_wrk = 50
     print(
         "Fetching Locations and Timestamps on each picture ... " +
@@ -176,21 +182,25 @@ def fetch_locations_and_timestamps_not_logged(links):
     )  # didnt find any information about Instagram / Facebook Usage Policy ... people on stackoverflow say there's no limit if you're not using any API so ... ¯\_(ツ)_/¯
     loop = asyncio.get_event_loop()
 
-    async def make_requests():
+    async def make_requests(requests_session):
+        if requests_session:
+            session = requests_session
+        else:
+            session = requests.Session()
         futures = [
-            loop.run_in_executor(executor, requests.get,
+            loop.run_in_executor(executor, session.get,
                                  "https://www.instagram.com/p/" + url)
             for url in links
         ]
         await asyncio.wait(futures)
         return futures
 
-    futures = loop.run_until_complete(make_requests())
+    futures = loop.run_until_complete(make_requests(requests_session))
     number_locs = len(futures)
 
     for i in range(0, number_locs):
         content = futures[i].result().text
-        location_timestamp = parse_location_timestamp(content, False)
+        location_timestamp = parse_location_timestamp(content)
         if location_timestamp != None:
             count += 1
             links_locations_timestamps.append([
@@ -208,50 +218,28 @@ def fetch_locations_and_timestamps_not_logged(links):
     return links_locations_timestamps
 
 
-def fetch_locations_and_timestamps_logged(browser, links):
-    """Catch all locations and timestamps on a profile"""
-    links_locations_timestamps = []
-    count = 1
-    sys.stdout.write("\033[K")
-    for link in links:  # iterate over the links, collect location and timestamps if a location is available on the Instagram post
-        count += 1
-        print("Checking Locations on each picture : Picture " + str(count) +
-              " out of " + str(len(links)) + " - " +
-              str(len(links_locations_timestamps)) + " Locations collected",
-              end="\r")
-        browser.get('https://www.instagram.com/p/' + link)
-        location_timestamp = parse_location_timestamp(browser.page_source,
-                                                      True)
-        if location_timestamp != None:
-            links_locations_timestamps.append([
-                "https://www.instagram.com/p/" + link,
-                location_timestamp[0],
-                location_timestamp[1],
-            ])
-    return links_locations_timestamps
-
-
 def geocode(location_dict):
     """Get the GPS coordinates of a location"""
     query = "https://nominatim.openstreetmap.org/search"
 
+    if location_dict.get(' country_code') != " ":  #ISO 3166-1alpha2 code
+        query += "countrycodes=" + location_dict.get(' country_code')[1:] + "&"
     if location_dict.get(' city_name') != " ":
         query += "?city=" + location_dict.get(' city_name')[1:] + "&"
+        # if location_dict.get(" zip_code") != "":
+        #     query += "postalcode=" + location_dict(" zip_code")[1:] + "&"
+
     else:
         query += "?q=" + location_dict.get("name").replace(
             "-", " ") + "&"  # second try?
         if location_dict.get('street_address') != " ":
             query += "?street=" + location_dict.get('street_address') + "&"
-    if location_dict.get(' country_code') != " ":  #ISO 3166-1alpha2 code
-        query += "countrycodes=" + location_dict.get(' country_code')[1:] + "&"
-    # if location_dict.get(" zip_code") != "":
-    #     query += "postalcode=" + str(location_dict(" zip_code")) + "&"
+
     return requests.get(query + "&format=json&limit=1").json()
 
 
 def geocode_all(links_locations_and_timestamps):
     """Get the GPS coordinates of all the locations"""
-    sys.stdout.write("\033[K")
     errors = 0
     cnt = 1
     gps_coordinates = []
@@ -276,9 +264,33 @@ def geocode_all(links_locations_and_timestamps):
         )  # Respect Nominatim's Usage Policy! (1 request per sec max) https://operations.osmfoundation.org/policies/nominatim/
         cnt += 1
 
-    sys.stdout.write("\033[K")
-
     return gps_coordinates
+
+
+def stats(links_locations_and_timestamps):
+    countrycodes_dict = dict()
+    continents_dict = dict()
+
+    countrycodes = [
+        x[1].get(" country_code")[1:] for x in links_locations_and_timestamps
+    ]
+
+    for countrycode in countrycodes:
+        if countrycode in countrycodes_dict:
+            countrycodes_dict[countrycode] += 1
+        else:
+            countrycodes_dict.update({countrycode: 1})
+
+        try:
+            continent = pc.country_alpha2_to_continent_code(countrycode)
+        except:
+            pass
+        if continent in continents_dict:
+            continents_dict[continent] += 1
+        else:
+            continents_dict.update({continent: 1})
+
+    return (countrycodes_dict, continents_dict)
 
 
 def export_data(args, links_locations_and_timestamps, gps_coordinates):
@@ -326,7 +338,8 @@ def export_data(args, links_locations_and_timestamps, gps_coordinates):
 
 
 def map_locations(args, number_publications, numbers,
-                  links_locations_and_timestamps, gps_coordinates):
+                  links_locations_and_timestamps, gps_coordinates,
+                  countrycodes_for_js, continents_for_js):
     """Pin all the locations on on an interactive map"""
     templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
@@ -341,7 +354,8 @@ def map_locations(args, number_publications, numbers,
         places=str([x[1] for x in links_locations_and_timestamps]),
         timestamps=str([x[2] for x in links_locations_and_timestamps]),
         locations=str(gps_coordinates),
-    )
+        countrycodes=str(countrycodes_for_js),
+        continents=str(continents_for_js))
 
     with open(
             "output/" + args.target_account + "/" + args.target_account +
@@ -369,20 +383,24 @@ def main():
                                     browser.page_source).group(1)
 
     links = fetch_urls(browser, number_publications)
+    requests_session = None
     if logged_in:
-        links_locations_and_timestamps = fetch_locations_and_timestamps_logged(
-            browser, links)
-    else:
-        browser.quit()
-        links_locations_and_timestamps = fetch_locations_and_timestamps_not_logged(
-            links)
+        requests_session = selenium_to_requests_session(browser)
+    browser.quit()
+    links_locations_and_timestamps = fetch_locations_and_timestamps(
+        links, requests_session)
 
     gps_coordinates = geocode_all(links_locations_and_timestamps)
 
     numbers = export_data(args, links_locations_and_timestamps,
                           gps_coordinates)
+
+    (countrycodes, continents) = stats(links_locations_and_timestamps)
+    countrycodes_for_js = [[k, v] for k, v in countrycodes.items()]
+    continents_for_js = [[k, v] for k, v in continents.items()]
     map_locations(args, number_publications, numbers,
-                  links_locations_and_timestamps, gps_coordinates)
+                  links_locations_and_timestamps, gps_coordinates,
+                  countrycodes_for_js, continents_for_js)
 
 
 if __name__ == "__main__":
