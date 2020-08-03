@@ -1,0 +1,2 @@
+include instaloctrack/instaloctrack.py
+include instaloctrack/templates/*
